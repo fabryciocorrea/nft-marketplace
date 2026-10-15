@@ -18,12 +18,12 @@ Instaladas, mas ainda não utilizadas: TanStack Router, socket.io-client, React 
 - Catálogo de NFTs consumindo uma API REST simulada (`GET /api/nfts`) via Axios + TanStack Query.
 - Busca por texto e filtro por categoria (aplicados no cliente).
 - Carrinho com adicionar, remover, esvaziar e total.
-- Login simulado no cliente, com cabeçalho mostrando as iniciais do usuário.
+- **Login, sessão e logout integrados à API simulada**, com sessão recuperada após refresh e mensagem de erro para credenciais inválidas.
 - Estados de carregamento, erro e resultado vazio no catálogo.
 
 ## O que ainda não está implementado
 
-Roteamento e página de detalhe, cadastro, sessão persistente, favoritos, cotação, checkout e pedidos, perfil, carteiras, Socket.IO, testes Playwright e auditoria Lighthouse. Os motivos e o plano estão no [ARCHITECTURE.md](./ARCHITECTURE.md).
+Roteamento e página de detalhe, cadastro, rotas privadas, favoritos, cotação, checkout e pedidos, perfil, carteiras, Socket.IO, testes Playwright e auditoria Lighthouse. Os motivos e o plano estão no [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Setup
 
@@ -59,24 +59,41 @@ Comandos para testes Playwright e auditoria Lighthouse ainda não existem.
 
 ## Credenciais fictícias
 
-O login atual é uma simulação local: qualquer e-mail válido e qualquer senha são aceitos. Não há credenciais fixas nem dados reais armazenados.
+| Usuário      | E-mail                  | Senha       |
+| ------------ | ----------------------- | ----------- |
+| Larissa Rosa | `larissa@exemplo.com`   | `Senha@123` |
+| Chaves do 8  | `chavesdo8@exemplo.com` | `Senha@456` |
+
+São dados fictícios. No banco simulado as senhas ficam como hash SHA-256, nunca em claro.
+
+## Como reproduzir o fluxo de login
+
+1. Clique em **Entrar** e informe `larissa@exemplo.com` com `Senha@123`. O nome aparece no cabeçalho.
+2. Atualize a página (`F5`): a sessão continua ativa.
+3. Clique em **Sair**: a sessão é encerrada e o carrinho é limpo.
+
+**Falha de credenciais:** informe uma senha errada. A API simulada responde `401` e o modal exibe "E-mail ou senha inválidos."
 
 ## Cenários de mock
 
-Ainda não há cenários configuráveis (latência, falhas, sessão expirada etc.). Os dados simulados são os três NFTs e o usuário de exemplo em `src/mocks/fixtures/db.ts`. Para restaurar o estado inicial, basta recarregar a página: o carrinho e o login não são persistidos.
+Ainda não há cenários configuráveis (latência, falhas, sessão expirada etc.). Os dados simulados ficam em `src/mocks/fixtures/db.ts`: três NFTs e dois usuários. A sessão é guardada no navegador (`localStorage`); para restaurar o estado inicial, basta sair da conta ou limpar os dados do site. O carrinho não é persistido e volta vazio ao recarregar a página.
 
 ## Contratos REST
 
 ### Implementados
 
-| Método | Rota           | Descrição                                              |
-| ------ | -------------- | ------------------------------------------------------ |
-| GET    | `/api/nfts`    | Lista de NFTs                                          |
-| GET    | `/api/auth/me` | Usuário de exemplo (não consumido pela interface hoje) |
+| Método | Rota                | Descrição                                                    | Erros                                          |
+| ------ | ------------------- | ------------------------------------------------------------ | ---------------------------------------------- |
+| GET    | `/api/nfts`         | Lista de NFTs                                                | -                                              |
+| POST   | `/api/auth/login`   | Autentica e devolve `{ token, user }`                        | 401 credenciais inválidas, 422 campos ausentes |
+| GET    | `/api/auth/session` | Devolve o usuário da sessão (header `Authorization: Bearer`) | 401 sessão inválida ou expirada                |
+| POST   | `/api/auth/logout`  | Encerra a sessão                                             | -                                              |
+
+Formato de erro: `{ "error": { "code": "INVALID_CREDENTIALS", "message": "..." } }`.
 
 ### Planejados
 
-Sessão (`/auth/register`, `/auth/login`, `/auth/session`, `/auth/logout`), detalhe de NFT, favoritos, carrinho, cotação, pedidos com `Idempotency-Key`, perfil e carteiras. Detalhes no [ARCHITECTURE.md](./ARCHITECTURE.md).
+Cadastro (`/auth/register`), detalhe de NFT, favoritos, carrinho, cotação, pedidos com `Idempotency-Key`, perfil e carteiras. Detalhes no [ARCHITECTURE.md](./ARCHITECTURE.md).
 
 ## Limitações conhecidas
 

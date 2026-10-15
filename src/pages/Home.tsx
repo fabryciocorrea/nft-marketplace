@@ -7,12 +7,17 @@ import { logout } from "../services/auth";
 import CartModal from "../components/CartModal";
 import LoginModal from "../components/LoginModal";
 import type { NFT } from "../types";
+import OrderModal from "../components/OrderModal";
+import { getPendingOrderId } from "../services/orders";
 
 export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const queryClient = useQueryClient();
   const { data: user } = useSession();
+  const [orderId, setOrderId] = useState<string | null>(null);
+  // Se houver um pedido em andamento (ex.: após refresh), ele reaparece
+  const activeOrderId = user ? (orderId ?? getPendingOrderId(user.id)) : null;
 
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -34,6 +39,8 @@ export default function Home() {
   const handleLogout = async () => {
     await logout();
     queryClient.setQueryData(SESSION_KEY, null);
+    queryClient.removeQueries({ queryKey: ["orders"] }); // limpa dados privados do cache
+    setOrderId(null);
     clearCart(); // evita que o próximo usuário veja o carrinho anterior
   };
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -228,7 +235,21 @@ export default function Home() {
       </main>
 
       {/* Modais */}
-      <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <CartModal
+        isOpen={isCartOpen}
+        onClose={() => setIsCartOpen(false)}
+        user={user}
+        onRequireLogin={() => setIsLoginOpen(true)}
+        onOrderCreated={(id) => {
+          setOrderId(id);
+          setIsCartOpen(false);
+        }}
+      />
+      <OrderModal
+        orderId={activeOrderId}
+        userId={user?.id ?? ""}
+        onClose={() => setOrderId(null)}
+      />
       <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </div>
   );

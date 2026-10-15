@@ -192,6 +192,7 @@ export default function Home() {
               return (
                 <div
                   key={nft.id}
+                  data-testid={`nft-card-${nft.id}`}
                   className="bg-white rounded-xl shadow-sm border overflow-hidden flex flex-col hover:shadow-md transition-shadow"
                 >
                   <img

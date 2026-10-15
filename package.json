@@ -11,20 +11,27 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.9.1",
+    "@mswjs/socket.io-binding": "^0.2.0",
+    "@radix-ui/react-dialog": "^1.3.1",
+    "@radix-ui/react-slot": "^1.5.0",
     "@tailwindcss/vite": "^4.3.3",
     "@tanstack/react-query": "^5.104.2",
     "@tanstack/react-router": "^1.170.44",
     "axios": "^1.20.0",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "decimal.js": "^10.6.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-hook-form": "^7.90.0",
     "socket.io-client": "^4.8.4",
+    "tailwind-merge": "^3.7.0",
     "tailwindcss": "^4.3.3",
     "zod": "^4.6.7",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "@types/node": "^24.13.3",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
@@ -38,5 +45,7 @@
     "workerDirectory": [
       "public"
     ]
-  }
+  },
+  "test:e2e": "playwright test",
+  "test:e2e:report": "playwright show-report"
 }

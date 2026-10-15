@@ -1,58 +1,83 @@
-# 🛍️ NFT Marketplace - Desafio Frontend
+# NFT Marketplace
 
-Aplicação web moderna de e-commerce de NFTs desenvolvida como desafio técnico para a posição de Frontend Developer. O projeto conta com arquitetura modular, gestão avançada de estado de servidor e de UI, fluxo de autenticação dinâmico, além de uma experiência de utilizador altamente polida.
+Desafio técnico de Frontend: marketplace de NFTs em React + TypeScript, com API simulada por MSW.
 
-## 🚀 Tecnologias Utilizadas
+- **Aplicação publicada:** https://nft-marketplace-murex-eight.vercel.app/
+- **Repositório:** https://github.com/fabryciocorrea/nft-marketplace
 
-- **React** + **TypeScript** (Tipagem estática e segurança de código)
-- **Vite** (Build tool ultrarrápido)
-- **Tailwind CSS v4** (Estilização moderna e responsiva)
-- **TanStack Query (React Query)** (Gestão de cache e estado assíncrono do servidor)
-- **Zustand** (Gestão de estado global leve e performática para o carrinho)
-- **Axios** (Cliente HTTP)
-- **MSW (Mock Service Worker)** (Simulação robusta de API REST no navegador)
+> **Estado da entrega:** esta é uma entrega parcial. A seção [O que está implementado](#o-que-está-implementado) lista com precisão o que funciona hoje, e o [ARCHITECTURE.md](./ARCHITECTURE.md) detalha decisões, limitações e o roadmap.
 
----
+## Stack
 
-## ✨ Funcionalidades Principais
+React, TypeScript, Vite, Tailwind CSS v4, TanStack Query, Axios, Zustand e MSW.
 
-- **Catálogo & Descoberta**: Grelha dinâmica de NFTs com suporte a pesquisa por texto em tempo real (lupa) e filtragem por categorias.
-- **Carrinho de Compras Global**: Adição/remoção de itens com contadores dinâmicos e cálculo automático em tempo real via Zustand.
-- **Autenticação & Sessão**: Modal de login interativo com gestão de sessão local, exibição de avatar e iniciais do utilizador no cabeçalho.
-- **Resiliência e Feedback**: Estados de carregamento (_loading skeletons_), alertas de erro amigáveis e feedback para buscas sem resultados.
+Instaladas, mas ainda não utilizadas: TanStack Router, socket.io-client, React Hook Form e Zod.
 
----
+## O que está implementado
 
-## 📑 5. Contratos REST (API Specification)
+- Catálogo de NFTs consumindo uma API REST simulada (`GET /api/nfts`) via Axios + TanStack Query.
+- Busca por texto e filtro por categoria (aplicados no cliente).
+- Carrinho com adicionar, remover, esvaziar e total.
+- Login simulado no cliente, com cabeçalho mostrando as iniciais do usuário.
+- Estados de carregamento, erro e resultado vazio no catálogo.
 
-Abaixo estão definidos e documentados os contratos dos recursos REST que estruturam a arquitetura completa do ecossistema do Marketplace:
+## O que ainda não está implementado
 
-| Recurso            | Operações                                                                  | Endpoints Principais (Exemplo)                                                      |
-| :----------------- | :------------------------------------------------------------------------- | :---------------------------------------------------------------------------------- |
-| **Sessão e conta** | Cadastro, login, consulta da sessão, logout e expiração                    | `POST /auth/register`, `POST /auth/login`, `GET /auth/session`, `POST /auth/logout` |
-| **NFTs**           | Listagem com busca/filtros/ordenação/paginação e detalhe por identificador | `GET /nfts?search=&category=&sort=&page=`, `GET /nfts/{id}`                         |
-| **Favoritos**      | Consulta, inclusão e remoção                                               | `GET /favorites`, `POST /favorites`, `DELETE /favorites/{id}`                       |
-| **Carrinho**       | Consulta, inclusão, alteração e remoção de itens                           | `GET /cart`, `POST /cart/items`, `PUT /cart/items/{id}`, `DELETE /cart/items/{id}`  |
-| **Cotação**        | Validação de cupom, disponibilidade, descontos, taxas e total              | `POST /quotes/calculate`                                                            |
-| **Pedidos**        | Criação idempotente e consulta do estado e recibo                          | `POST /orders` (com `Idempotency-Key`), `GET /orders/{id}`                          |
-| **Perfil**         | Consulta, atualização de dados/avatar e alteração de senha                 | `GET /profile`, `PUT /profile`, `PATCH /profile/password`                           |
-| **Carteiras**      | Consulta, cadastro e atualização                                           | `GET /wallets`, `POST /wallets`, `PUT /wallets/{id}`                                |
+Roteamento e página de detalhe, cadastro, sessão persistente, favoritos, cotação, checkout e pedidos, perfil, carteiras, Socket.IO, testes Playwright e auditoria Lighthouse. Os motivos e o plano estão no [ARCHITECTURE.md](./ARCHITECTURE.md).
 
----
+## Setup
 
-## 🏗️ Decisões Arquiteturais
+Requisitos: Node.js 20 ou superior.
 
-- **Separação de Responsabilidades**: A camada de serviços (`src/services/`) isola as chamadas HTTP via Axios e o estado global do carrinho via Zustand.
-- **Componentização Modular**: Separação clara entre componentes de UI (`CartModal`, `LoginModal`), páginas (`Home.tsx`) e tipos TypeScript (`src/types/`).
-- **Mock Service Worker (MSW)**: Utilizado para simular o comportamento de uma API em ambiente de desenvolvimento, garantindo contratos fiéis aos especificados na arquitetura.
-- **UX Fluida**: Filtros por categoria, barra de pesquisa reativa e modal de login com efeito de desfoque de fundo (`backdrop-blur`).
+```bash
+git clone https://github.com/fabryciocorrea/nft-marketplace.git
+cd nft-marketplace
+npm install
+npm run dev
+```
 
----
+A aplicação abre em `http://localhost:5173`.
 
-## 📦 Como Executar o Projeto
+## Variáveis de ambiente
 
-1. Clona o repositório:
-   ```bash
-   git clone <url-do-repositorio>
-   cd nft-marketplace
-   ```
+| Variável            | Descrição                  | Valor usado                                      |
+| ------------------- | -------------------------- | ------------------------------------------------ |
+| `VITE_ENABLE_MOCKS` | Ativa o MSW (API simulada) | `true` em `.env.development` e `.env.production` |
+
+O MSW fica ativo também no build publicado, para que a demonstração funcione sem backend.
+
+## Comandos
+
+| Comando           | Finalidade                                          |
+| ----------------- | --------------------------------------------------- |
+| `npm run dev`     | Desenvolvimento com mocks                           |
+| `npm run build`   | Verificação de tipos e build de produção            |
+| `npm run preview` | Servir o build localmente (`http://localhost:4173`) |
+| `npm run lint`    | Lint                                                |
+
+Comandos para testes Playwright e auditoria Lighthouse ainda não existem.
+
+## Credenciais fictícias
+
+O login atual é uma simulação local: qualquer e-mail válido e qualquer senha são aceitos. Não há credenciais fixas nem dados reais armazenados.
+
+## Cenários de mock
+
+Ainda não há cenários configuráveis (latência, falhas, sessão expirada etc.). Os dados simulados são os três NFTs e o usuário de exemplo em `src/mocks/fixtures/db.ts`. Para restaurar o estado inicial, basta recarregar a página: o carrinho e o login não são persistidos.
+
+## Contratos REST
+
+### Implementados
+
+| Método | Rota           | Descrição                                              |
+| ------ | -------------- | ------------------------------------------------------ |
+| GET    | `/api/nfts`    | Lista de NFTs                                          |
+| GET    | `/api/auth/me` | Usuário de exemplo (não consumido pela interface hoje) |
+
+### Planejados
+
+Sessão (`/auth/register`, `/auth/login`, `/auth/session`, `/auth/logout`), detalhe de NFT, favoritos, carrinho, cotação, pedidos com `Idempotency-Key`, perfil e carteiras. Detalhes no [ARCHITECTURE.md](./ARCHITECTURE.md).
+
+## Limitações conhecidas
+
+Consulte a seção de limitações no [ARCHITECTURE.md](./ARCHITECTURE.md).

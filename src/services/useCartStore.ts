@@ -1,68 +1,53 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { NFT, CartItem } from "../types";
+import type { NFT } from "../types";
 
-interface CartState {
-  items: CartItem[];
+// Carrinho ANÔNIMO (visitante). Quando há sessão, o carrinho vive no servidor
+// e este store só serve para mesclar no login (POST /cart/merge).
+export interface AnonItem {
+  nft: NFT;
+  quantity: number;
+}
+
+interface AnonCartState {
+  items: AnonItem[];
   addItem: (nft: NFT) => void;
   decrementItem: (nftId: string) => void;
   removeItem: (nftId: string) => void;
-  removePurchased: (purchased: { nftId: string; quantity: number }[]) => void;
-  clearCart: () => void;
+  clear: () => void;
 }
 
-export const useCartStore = create<CartState>()(
+export const useAnonCart = create<AnonCartState>()(
   persist(
     (set) => ({
       items: [],
-
       addItem: (nft) =>
         set((state) => {
-          const existing = state.items.find((item) => item.nft.id === nft.id);
+          const existing = state.items.find((i) => i.nft.id === nft.id);
           if (existing) {
             if (existing.quantity >= nft.availableQuantity) return state;
             return {
-              items: state.items.map((item) =>
-                item.nft.id === nft.id
-                  ? { ...item, quantity: item.quantity + 1 }
-                  : item,
+              items: state.items.map((i) =>
+                i.nft.id === nft.id ? { ...i, quantity: i.quantity + 1 } : i,
               ),
             };
           }
           if (nft.availableQuantity < 1) return state;
           return { items: [...state.items, { nft, quantity: 1 }] };
         }),
-
       decrementItem: (nftId) =>
         set((state) => ({
           items: state.items
-            .map((item) =>
-              item.nft.id === nftId
-                ? { ...item, quantity: item.quantity - 1 }
-                : item,
+            .map((i) =>
+              i.nft.id === nftId ? { ...i, quantity: i.quantity - 1 } : i,
             )
-            .filter((item) => item.quantity > 0),
+            .filter((i) => i.quantity > 0),
         })),
-
       removeItem: (nftId) =>
         set((state) => ({
-          items: state.items.filter((item) => item.nft.id !== nftId),
+          items: state.items.filter((i) => i.nft.id !== nftId),
         })),
-
-      // Remove do carrinho só o que foi efetivamente comprado
-      removePurchased: (purchased) =>
-        set((state) => ({
-          items: state.items
-            .map((item) => {
-              const bought = purchased.find((p) => p.nftId === item.nft.id);
-              return bought
-                ? { ...item, quantity: item.quantity - bought.quantity }
-                : item;
-            })
-            .filter((item) => item.quantity > 0),
-        })),
-
-      clearCart: () => set({ items: [] }),
+      clear: () => set({ items: [] }),
     }),
     { name: "nft-marketplace:cart" },
   ),

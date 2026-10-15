@@ -1,1 +1,73 @@
 @import "tailwindcss";
+
+/* Tokens do design KURIO (Figma "Marketplace de NFTs GreenMint") */
+@theme {
+  --font-sans: "Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+
+  --color-ink: #140d0a;
+  --color-card: #241612;
+  --color-elevated: #38220f;
+  --color-primary: #d28a4c;
+  --color-accent: #e89b55;
+  --color-fg: #f7f3ec;
+  --color-muted: #cfb28c;
+  --color-secondary: #b39463;
+  --color-line: #8a5a3c; /* contorno de campos e botões: ≥ 3:1 sobre ink */
+  --color-line-soft: #3f2319; /* decoração */
+  --color-light: #fbfbfb;
+  --color-danger: #ff8a7a;
+  --color-success: #8fd19e;
+
+  --text-display: 43px;
+  --text-display--line-height: 1.25;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ink);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Skeleton com shimmer; respeita prefers-reduced-motion */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-card) 25%,
+    var(--color-elevated) 50%,
+    var(--color-card) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+  * {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}

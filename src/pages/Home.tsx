@@ -1,7 +1,9 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../services/api";
 import { useCartStore } from "../services/useCartStore";
+import { useSession, SESSION_KEY } from "../hooks/useSession";
+import { logout } from "../services/auth";
 import CartModal from "../components/CartModal";
 import LoginModal from "../components/LoginModal";
 import type { NFT } from "../types";
@@ -9,9 +11,8 @@ import type { NFT } from "../types";
 export default function Home() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
-  const [user, setUser] = useState<{ name: string; email: string } | null>(
-    null,
-  );
+  const queryClient = useQueryClient();
+  const { data: user } = useSession();
 
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -28,7 +29,13 @@ export default function Home() {
     },
   });
 
-  const { items, addItem } = useCartStore();
+  const { items, addItem, clearCart } = useCartStore();
+
+  const handleLogout = async () => {
+    await logout();
+    queryClient.setQueryData(SESSION_KEY, null);
+    clearCart(); // evita que o próximo usuário veja o carrinho anterior
+  };
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
 
   // Obter categorias únicas
@@ -87,7 +94,7 @@ export default function Home() {
                 {getInitials(user.name)}
               </div>
               <button
-                onClick={() => setUser(null)}
+                onClick={handleLogout}
                 className="text-xs text-red-500 hover:underline ml-2 cursor-pointer"
                 title="Terminar Sessão"
               >
@@ -222,11 +229,7 @@ export default function Home() {
 
       {/* Modais */}
       <CartModal isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-      <LoginModal
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-        onLoginSuccess={(userData) => setUser(userData)}
-      />
+      <LoginModal isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
     </div>
   );
 }

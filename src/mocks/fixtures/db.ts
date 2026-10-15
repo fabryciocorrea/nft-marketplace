@@ -72,3 +72,27 @@ export const mockUser: User = {
     },
   ],
 };
+
+export interface MockAccount {
+  id: string;
+  name: string;
+  email: string;
+  passwordHash: string; // SHA-256 da senha (nunca a senha em claro)
+}
+
+export const mockUsers: MockAccount[] = [
+  {
+    id: "user-1",
+    name: "Larissa Rosa",
+    email: "larissa@exemplo.com",
+    passwordHash:
+      "a2ca37fe6fdc490b8f7ce841e1701a169d2b1697c6b5b5c63f94abb8f9b6d6dd",
+  },
+  {
+    id: "user-2",
+    name: "Chaves do 8",
+    email: "chavesdo8@exemplo.com",
+    passwordHash:
+      "9875d879e70abde04d1959fb9d3450837bbd78217423bc11734574413532ada8",
+  },
+];

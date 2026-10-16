@@ -14,13 +14,13 @@ Desafio técnico de Frontend: marketplace de NFTs em **React + TypeScript**, com
 - Cadastro, login, sessão com renovação, logout que revoga o token, rotas privadas com retorno ao contexto, expiração durante o checkout.
 - Perfil (dados, avatar, senha) e carteiras (principal única).
 - **Tempo real** por Socket.IO simulado (`nft.updated`, `order.updated`) com descarte de duplicatas/versões antigas e reconciliação após queda.
-- Tema KURIO, skeletons, estados vazio/erro, acessibilidade e responsividade (390 / 768 / 1440) testadas.
+- Visual do `DESIGN-SYSTEM.md` (tema claro, azul, Inter, shadcn/ui via CLI), **filtro único em dropdown composto**, skeletons, estados vazio/erro, acessibilidade e responsividade (390 / 768 / 1440) testadas.
 
-O que **não** está completo (detalhes em [ROADMAP.md](./ROADMAP.md)): fidelidade pixel a pixel ao Figma, `shadcn/ui` via CLI (os componentes seguem o padrão, escritos à mão) e performance móvel ≥ 80 em todas as rotas.
+O que **não** está completo (detalhes em [ROADMAP.md](./ROADMAP.md)): fidelidade pixel a pixel às referências visuais e performance móvel ≥ 80 em todas as rotas.
 
 ## Stack
 
-React 19, TypeScript, Vite, Tailwind CSS v4, TanStack Router, TanStack Query, React Hook Form + Zod, Zustand, Axios, Socket.IO client, decimal.js, MSW 3 (`http` + `ws`), Radix, Playwright e Lighthouse.
+React 19, TypeScript, Vite, Tailwind CSS v4, **shadcn/ui** (Radix), TanStack Router, TanStack Query, React Hook Form + Zod, Zustand, Axios, Socket.IO client, decimal.js, MSW 3 (`http` + `ws`), Playwright e Lighthouse.
 
 ## Setup
 

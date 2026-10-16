@@ -19,7 +19,7 @@ test.describe("UI · catálogo", () => {
   test("facetas com contagem, filtros combinados e limpar", async ({ page }) => {
     await boot(page);
     await openFilters(page);
-    const panel = page.getByRole("complementary", { name: "Filtros" });
+    const panel = page.getByRole("dialog", { name: "Filtros do catálogo" });
 
     // marca coleção e rede: a URL reflete e o resultado reduz
     await panel.getByLabel(/Pixel Forest/).check();
@@ -41,7 +41,7 @@ test.describe("UI · catálogo", () => {
   }) => {
     await boot(page, "/");
     await openFilters(page);
-    const panel = page.getByRole("complementary", { name: "Filtros" });
+    const panel = page.getByRole("dialog", { name: "Filtros do catálogo" });
     const label = panel.getByLabel(/Neo Tokyo/);
     const text = await panel.locator("label", { hasText: "Neo Tokyo" }).innerText();
     const count = Number(/\((\d+)\)/.exec(text)![1]);
@@ -58,7 +58,7 @@ test.describe("UI · catálogo", () => {
       "Micro Fragment #1",
     );
 
-    const panel = page.getByRole("complementary", { name: "Filtros" });
+    const panel = page.getByRole("dialog", { name: "Filtros do catálogo" });
     await panel.getByLabel("Preço mínimo").fill("1");
     await panel.getByLabel("Preço máximo").fill("2");
     await panel.getByLabel("Preço máximo").press("Enter");
@@ -73,7 +73,7 @@ test.describe("UI · catálogo", () => {
     await panel.getByLabel("Ordenar por").selectOption("price_desc");
     await expect(page).toHaveURL(/sort=price_desc/);
 
-    await panel.getByRole("button", { name: /^Gaming/ }).click();
+    await panel.getByRole("tab", { name: /^Gaming/ }).click();
     await expect(page).toHaveURL(/tab=Gaming/);
   });
 
@@ -89,8 +89,8 @@ test.describe("UI · catálogo", () => {
     await page.reload();
     await expect(page.getByTestId("page-indicator")).toHaveText("Página 2 de 3");
 
-    await openFilters(page);
-    await page.getByLabel(/Ethereum/).check();
+    const dropdown = await openFilters(page);
+    await dropdown.getByLabel(/Ethereum/).check();
     await expect(page).not.toHaveURL(/page=2/);
   });
 
@@ -110,7 +110,7 @@ test.describe("UI · catálogo", () => {
     await setScenario(page, { latencyMs: 1500 });
     await openFilters(page);
     await page
-      .getByRole("complementary", { name: "Filtros" })
+      .getByRole("dialog", { name: "Filtros do catálogo" })
       .getByLabel(/Pixel Forest/)
       .check();
     // a lista antiga continua visível; o contador mostra o novo total ao final

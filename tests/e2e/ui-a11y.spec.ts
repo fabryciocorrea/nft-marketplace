@@ -15,7 +15,12 @@ async function noHorizontalOverflow(page: Page) {
 }
 
 // Contraste WCAG entre duas cores hexadecimais
-function luminance(hex: string) {
+function luminance(raw: string) {
+  // o minificador do build pode abreviar #ffffff para #fff
+  const hex =
+    raw.length === 4
+      ? "#" + raw.slice(1).split("").map((c) => c + c).join("")
+      : raw;
   const [r, g, b] = [1, 3, 5].map((i) => {
     const c = parseInt(hex.slice(i, i + 2), 16) / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
@@ -30,6 +35,7 @@ function contrast(a: string, b: string) {
 test.describe("Responsividade (390 / 768 / 1440)", () => {
   for (const vp of VIEWPORTS) {
     test(`sem rolagem horizontal em ${vp.name}px`, async ({ page }) => {
+      test.setTimeout(90_000); // visita 9 rotas e faz login
       await page.setViewportSize({ width: vp.width, height: vp.height });
       const publicRoutes = ["/", "/nfts/1", "/cart", "/login", "/register"];
       for (const route of publicRoutes) {
@@ -86,31 +92,28 @@ test.describe("Acessibilidade", () => {
       const s = getComputedStyle(document.documentElement);
       const get = (n: string) => s.getPropertyValue(n).trim();
       return {
-        ink: get("--color-ink"),
-        card: get("--color-card"),
-        fg: get("--color-fg"),
-        muted: get("--color-muted"),
-        accent: get("--color-accent"),
-        primary: get("--color-primary"),
-        line: get("--color-line"),
-        danger: get("--color-danger"),
-        success: get("--color-success"),
-        secondary: get("--color-secondary"),
+        bg: get("--background"),
+        secondary: get("--secondary"),
+        fg: get("--foreground"),
+        muted: get("--muted-foreground"),
+        primary: get("--primary"),
+        primaryFg: get("--primary-foreground"),
+        input: get("--input"),
+        destructive: get("--destructive"),
+        success: get("--success"),
       };
     });
-    // texto normal >= 4.5:1
-    expect(contrast(t.fg, t.ink)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(t.muted, t.ink)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(t.muted, t.card)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(t.accent, t.card)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(t.secondary, t.ink)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(t.danger, t.ink)).toBeGreaterThanOrEqual(4.5);
-    expect(contrast(t.success, t.ink)).toBeGreaterThanOrEqual(4.5);
-    // botão primário: texto escuro sobre cobre
-    expect(contrast(t.ink, t.primary)).toBeGreaterThanOrEqual(4.5);
-    // componentes de interface (bordas de campos/botões) >= 3:1
-    expect(contrast(t.line, t.ink)).toBeGreaterThanOrEqual(3);
-    expect(contrast(t.line, t.card)).toBeGreaterThanOrEqual(3);
+    // texto normal >= 4,5:1
+    expect(contrast(t.fg, t.bg)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(t.muted, t.bg)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(t.muted, t.secondary)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(t.primary, t.bg)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(t.destructive, t.bg)).toBeGreaterThanOrEqual(4.5);
+    expect(contrast(t.success, t.bg)).toBeGreaterThanOrEqual(4.5);
+    // texto sobre o botão primário
+    expect(contrast(t.primaryFg, t.primary)).toBeGreaterThanOrEqual(4.5);
+    // componentes de interface (borda de campos e botões) >= 3:1
+    expect(contrast(t.input, t.bg)).toBeGreaterThanOrEqual(3);
   });
 
   test("estrutura: marcos, um h1 por página e imagens com alt", async ({
@@ -159,13 +162,16 @@ test.describe("Acessibilidade", () => {
   test("foco visível nos controles interativos", async ({ page }) => {
     await boot(page, "/login");
     await page.getByLabel("E-mail").focus();
-    const outline = await page.evaluate(() => {
+    const indicator = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement;
       const s = getComputedStyle(el);
-      return { style: s.outlineStyle, width: parseFloat(s.outlineWidth) };
+      return {
+        outline: s.outlineStyle !== "none" && parseFloat(s.outlineWidth) >= 2,
+        ring: s.boxShadow !== "none",
+      };
     });
-    expect(outline.style).not.toBe("none");
-    expect(outline.width).toBeGreaterThanOrEqual(2);
+    // anel (shadcn) ou contorno: o foco precisa ser visível
+    expect(indicator.outline || indicator.ring).toBe(true);
   });
 
   test("diálogo prende o foco, fecha com Esc e devolve o foco ao gatilho", async ({

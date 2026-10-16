@@ -107,8 +107,30 @@ export function uniqueEmail(prefix = "novo") {
   return `${prefix}.${Date.now()}.${Math.floor(Math.random() * 1e6)}@exemplo.com`;
 }
 
-// No mobile os filtros ficam recolhidos: abre quando o botão estiver visível
+// Abre o dropdown composto de filtros
 export async function openFilters(page: Page) {
-  const toggle = page.getByRole("button", { name: "Mostrar filtros" });
-  if (await toggle.isVisible()) await toggle.click();
+  const panel = page.getByRole("dialog", { name: "Filtros do catálogo" });
+  if (!(await panel.isVisible())) {
+    await page.getByRole("button", { name: /^Filtros/ }).click();
+  }
+  await panel.waitFor();
+  return panel;
+}
+
+export function filtersPanel(page: Page) {
+  return page.getByRole("dialog", { name: "Filtros do catálogo" });
+}
+
+// Sair: no mobile o botão fica dentro do menu (Sheet)
+export async function logout(page: Page) {
+  const direct = page.getByRole("button", { name: "Sair" });
+  if (!(await direct.isVisible())) {
+    await page.getByRole("button", { name: "Abrir menu" }).click();
+  }
+  await page.getByRole("button", { name: "Sair" }).click();
+}
+
+// Toasts do Sonner
+export function toasts(page: Page) {
+  return page.locator("[data-sonner-toast]");
 }

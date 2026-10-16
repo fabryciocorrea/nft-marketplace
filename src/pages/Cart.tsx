@@ -15,6 +15,7 @@ export default function CartPage() {
   if (cart.rows.length === 0) {
     return (
       <EmptyState
+        level={1}
         title="Seu carrinho está vazio"
         description="Explore o catálogo e adicione NFTs para comprar."
       >

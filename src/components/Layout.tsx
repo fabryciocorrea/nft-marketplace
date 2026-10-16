@@ -212,7 +212,31 @@ function Footer() {
   );
 }
 
+const TITLES: [RegExp, string][] = [
+  [/^\/nfts\//, "Detalhes do NFT"],
+  [/^\/cart/, "Carrinho"],
+  [/^\/checkout/, "Pagamento"],
+  [/^\/order\//, "Pedido"],
+  [/^\/orders/, "Meus pedidos"],
+  [/^\/favorites/, "Favoritos"],
+  [/^\/login/, "Entrar"],
+  [/^\/register/, "Criar conta"],
+  [/^\/forgot-password/, "Recuperar senha"],
+  [/^\/profile/, "Perfil"],
+  [/^\/wallets/, "Carteiras"],
+];
+
+// Título do documento por rota (leitores de tela anunciam a mudança)
+function useDocumentTitle() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    const match = TITLES.find(([re]) => re.test(pathname));
+    document.title = match ? `${match[1]} · KURIO` : "KURIO — Marketplace de NFTs";
+  }, [pathname]);
+}
+
 export default function Layout() {
+  useDocumentTitle();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const router = useRouter();

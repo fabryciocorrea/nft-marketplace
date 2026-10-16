@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import type { QueryClient } from "@tanstack/react-query";
-import { clearToken, getToken } from "../services/api";
+import { clearToken, getToken, parseError, tryRefresh } from "../services/api";
 import { fetchSession, mergeCart } from "../services/endpoints";
 import { useAnonCart } from "../services/useCartStore";
 import type { User } from "../types";
@@ -13,8 +13,18 @@ export const sessionQuery = {
     if (!getToken()) return null;
     try {
       return await fetchSession();
-    } catch {
-      clearToken(); // token inválido ou expirado
+    } catch (error) {
+      // Falha de rede/servidor: mantém o token e deixa o React Query tentar de novo
+      if (parseError(error).status !== 401) throw error;
+      // 401: tenta renovar uma vez antes de considerar a sessão perdida
+      if (await tryRefresh()) {
+        try {
+          return await fetchSession();
+        } catch {
+          // cai para a limpeza abaixo
+        }
+      }
+      clearToken();
       return null;
     }
   },

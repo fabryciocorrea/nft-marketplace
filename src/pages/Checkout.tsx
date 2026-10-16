@@ -97,6 +97,7 @@ export default function Checkout() {
   if (cart.rows.length === 0) {
     return (
       <EmptyState
+        level={1}
         title="Não há itens para pagar"
         description="Adicione NFTs ao carrinho antes de seguir para o pagamento."
       >
@@ -112,6 +113,7 @@ export default function Checkout() {
   if (wallets.data && wallets.data.length === 0) {
     return (
       <EmptyState
+        level={1}
         title="Cadastre uma carteira para pagar"
         description="O pagamento é feito com uma carteira, na rede em que ela opera."
       >

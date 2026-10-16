@@ -1,4 +1,3 @@
-import { io } from "socket.io-client";
 import type { Socket } from "socket.io-client";
 import type { QueryClient } from "@tanstack/react-query";
 import { create } from "zustand";
@@ -73,6 +72,8 @@ function handleEvent(queryClient: QueryClient, envelope: Envelope) {
       () => order,
     );
     queryClient.invalidateQueries({ queryKey: ["orders-list"] });
+    // Confirmado: o servidor retirou os itens comprados do carrinho
+    queryClient.invalidateQueries({ queryKey: ["cart"] });
   }
 }
 
@@ -84,11 +85,19 @@ function reconcile(queryClient: QueryClient) {
   }
 }
 
-export function connectSocket(queryClient: QueryClient) {
+// O socket.io-client guarda o WebSocket global ao ser carregado. Por isso ele
+// é importado sob demanda: só depois de o MSW ter assumido o WebSocket.
+let generation = 0;
+
+export async function connectSocket(queryClient: QueryClient) {
   disconnectSocket();
+  const current = ++generation;
+  const { io } = await import("socket.io-client");
+  if (current !== generation) return; // desconectado enquanto carregava
   const s = io(window.location.origin, {
     path: "/socket.io",
     transports: ["websocket"],
+    forceNew: true, // cada conexão tem o próprio Manager (evita reaproveitar um fechado)
     // Lida a cada tentativa: reconectar usa o token mais recente
     auth: (cb) => cb({ token: getToken() ?? "" }),
     reconnectionDelay: 300,
@@ -107,6 +116,7 @@ export function connectSocket(queryClient: QueryClient) {
 
 // Logout/expiração: remove todos os listeners e fecha a conexão
 export function disconnectSocket() {
+  generation += 1;
   if (socket) {
     socket.removeAllListeners();
     socket.disconnect();

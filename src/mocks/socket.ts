@@ -53,10 +53,17 @@ subscribe((event) => {
   deliver(event.name, envelope, event.ownerId);
 });
 
-const link = ws.link("*/socket.io/");
+// O MSW remove o prefixo /socket.io/ da URL antes de comparar, então o link
+// casa com qualquer WebSocket da origem. Conexões que não são do Socket.IO
+// (ex.: o HMR do Vite em desenvolvimento) seguem para o servidor real.
+const link = ws.link("*");
 
 export const socketHandlers = [
   link.addEventListener("connection", (connection) => {
+    if (!connection.client.url.searchParams.has("EIO")) {
+      connection.server.connect();
+      return;
+    }
     const io = toSocketIo(connection);
     const conn: Connection = {
       userId: null,

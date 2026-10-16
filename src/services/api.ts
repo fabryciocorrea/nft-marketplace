@@ -39,7 +39,7 @@ api.interceptors.request.use((config) => {
 // Renovação silenciosa: uma única tentativa compartilhada entre requisições
 let refreshing: Promise<boolean> | null = null;
 
-async function tryRefresh() {
+export async function tryRefresh() {
   if (!refreshing) {
     refreshing = axios
       .post<{ token: string }>(

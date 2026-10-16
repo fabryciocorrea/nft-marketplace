@@ -79,6 +79,9 @@ export async function uiLogin(
 }
 
 export async function setScenario(page: Page, patch: Record<string, unknown>) {
+  await page.waitForFunction(
+    () => !!(window as unknown as { __kurioMocks?: unknown }).__kurioMocks,
+  );
   await page.evaluate(
     (p) =>
       (
@@ -102,4 +105,10 @@ export async function mocks<T>(
 
 export function uniqueEmail(prefix = "novo") {
   return `${prefix}.${Date.now()}.${Math.floor(Math.random() * 1e6)}@exemplo.com`;
+}
+
+// No mobile os filtros ficam recolhidos: abre quando o botão estiver visível
+export async function openFilters(page: Page) {
+  const toggle = page.getByRole("button", { name: "Mostrar filtros" });
+  if (await toggle.isVisible()) await toggle.click();
 }

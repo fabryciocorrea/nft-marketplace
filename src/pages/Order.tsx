@@ -43,6 +43,7 @@ export default function OrderPage() {
     if (err.status === 403 || err.status === 404) {
       return (
         <EmptyState
+          level={1}
           title={err.status === 403 ? "Acesso negado" : "Pedido não encontrado"}
           description={err.message}
         >

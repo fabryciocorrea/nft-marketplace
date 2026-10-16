@@ -28,6 +28,7 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
   component: Layout,
   notFoundComponent: () => (
     <EmptyState
+      level={1}
       title="Página não encontrada"
       description="O endereço não existe ou foi movido."
     />
@@ -42,7 +43,9 @@ async function requireUser({
   context: RouterContext;
   location: { href: string };
 }) {
-  const user = await context.queryClient.ensureQueryData(sessionQuery);
+  const user = await context.queryClient
+    .ensureQueryData(sessionQuery)
+    .catch(() => null);
   if (!user) {
     throw redirect({ to: "/login", search: { redirect: location.href } });
   }
@@ -162,6 +165,21 @@ export function createAppRouter(queryClient: QueryClient) {
     routeTree,
     context: { queryClient },
     defaultPreload: "intent",
+    // URL legível: ?q=cosmic&minPrice=1 (sem aspas JSON nos valores)
+    parseSearch: (search) =>
+      Object.fromEntries(
+        new URLSearchParams(search.startsWith("?") ? search.slice(1) : search),
+      ),
+    stringifySearch: (search) => {
+      const params = new URLSearchParams();
+      for (const [key, value] of Object.entries(search)) {
+        if (value !== undefined && value !== null && value !== "") {
+          params.set(key, String(value));
+        }
+      }
+      const text = params.toString();
+      return text ? `?${text}` : "";
+    },
   });
 }
 

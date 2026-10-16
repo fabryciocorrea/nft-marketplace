@@ -47,6 +47,7 @@ export default function NftDetail() {
     const notFound = parseError(nft.error).status === 404;
     return notFound ? (
       <EmptyState
+        level={1}
         title="NFT não encontrado"
         description="O item pode ter sido removido ou o endereço está incorreto."
       >

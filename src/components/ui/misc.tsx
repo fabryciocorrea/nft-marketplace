@@ -67,14 +67,18 @@ export function EmptyState({
   title,
   description,
   children,
+  level = 2,
 }: {
   title: string;
   description?: string;
   children?: React.ReactNode;
+  // 1 quando o estado vazio ocupa a página inteira (a página precisa de um h1)
+  level?: 1 | 2;
 }) {
+  const Heading = level === 1 ? "h1" : "h2";
   return (
     <div className="rounded-xl border border-line-soft bg-card px-6 py-12 text-center">
-      <p className="text-lg font-bold text-fg">{title}</p>
+      <Heading className="text-lg font-bold text-fg">{title}</Heading>
       {description && <p className="mt-1 text-sm text-muted">{description}</p>}
       {children && <div className="mt-4 flex justify-center">{children}</div>}
     </div>

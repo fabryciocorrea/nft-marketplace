@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "../components/ui/button";
@@ -31,6 +31,8 @@ export default function WalletsPage() {
   const queryClient = useQueryClient();
   const key = ["wallets", user?.id];
   const [toRemove, setToRemove] = useState<Wallet | null>(null);
+  // Guarda o botão que abriu o diálogo para devolver o foco ao fechar
+  const lastTrigger = useRef<HTMLElement | null>(null);
 
   const wallets = useQuery({
     queryKey: key,
@@ -136,7 +138,10 @@ export default function WalletsPage() {
                     <Button
                       size="sm"
                       variant="danger"
-                      onClick={() => setToRemove(w)}
+                      onClick={(e) => {
+                        lastTrigger.current = e.currentTarget;
+                        setToRemove(w);
+                      }}
                       aria-label={`Remover carteira ${w.label}`}
                     >
                       Remover
@@ -186,6 +191,10 @@ export default function WalletsPage() {
 
       <Dialog open={!!toRemove} onOpenChange={(o) => !o && setToRemove(null)}>
         <DialogContent
+          onCloseAutoFocus={(e) => {
+            e.preventDefault();
+            lastTrigger.current?.focus();
+          }}
           title="Remover carteira?"
           description={
             toRemove

@@ -1,5 +1,13 @@
 import { expect, test } from "@playwright/test";
-import { LARISSA, boot, setScenario, uiLogin, uniqueEmail } from "./helpers";
+import {
+  LARISSA,
+  boot,
+  logout,
+  setScenario,
+  toasts,
+  uiLogin,
+  uniqueEmail,
+} from "./helpers";
 
 test.describe("UI · conta", () => {
   test("cadastro: validação, sucesso e e-mail duplicado", async ({ page }) => {
@@ -25,7 +33,7 @@ test.describe("UI · conta", () => {
     await expect(page.getByTestId("user-name")).toHaveText("Pessoa Nova");
 
     // mesmo e-mail em nova tentativa: erro vindo do servidor no campo
-    await page.getByRole("button", { name: "Sair" }).click();
+    await logout(page);
     await page.goto("/register");
     await page.getByLabel("Nome").fill("Duplicada");
     await page.getByLabel("E-mail").fill(LARISSA.email);
@@ -62,7 +70,7 @@ test.describe("UI · conta", () => {
     await page.getByLabel("Receber novidades por e-mail").check();
     await page.getByRole("button", { name: "Salvar alterações" }).click();
     await expect(
-      page.getByTestId("toast").filter({ hasText: "Perfil atualizado" }),
+      toasts(page).filter({ hasText: "Perfil atualizado" }),
     ).toBeVisible();
     await expect(page.getByTestId("user-name")).toHaveText("Larissa Atualizada");
 
@@ -87,7 +95,7 @@ test.describe("UI · conta", () => {
     await page.getByLabel("Senha atual").fill(LARISSA.password);
     await page.getByRole("button", { name: "Alterar senha" }).click();
     await expect(
-      page.getByTestId("toast").filter({ hasText: "Senha alterada" }),
+      toasts(page).filter({ hasText: "Senha alterada" }),
     ).toBeVisible();
   });
 
@@ -168,7 +176,7 @@ test.describe("UI · conta", () => {
 
     const card = page.getByTestId("nft-card-1");
     await card.getByRole("button", { name: /Favoritar Cosmic/ }).click();
-    await expect(page.getByTestId("toast").first()).toContainText(
+    await expect(toasts(page).first()).toContainText(
       "Não foi possível atualizar os favoritos",
     );
     // voltou ao estado anterior

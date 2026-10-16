@@ -2,8 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Link, getRouteApi, useNavigate } from "@tanstack/react-router";
 import FavoriteButton from "../components/FavoriteButton";
 import NftCard from "../components/NftCard";
-import { Button } from "../components/ui/button";
-import { Badge, Card, EmptyState, ErrorState, Skeleton } from "../components/ui/misc";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState, ErrorState } from "../components/states";
 import { useCart } from "../hooks/useCart";
 import { parseError } from "../services/api";
 import { fetchNft, fetchRelated, fetchReviews } from "../services/endpoints";
@@ -77,8 +80,8 @@ export default function NftDetail() {
 
   return (
     <div className="flex flex-col gap-12">
-      <nav aria-label="Trilha de navegação" className="text-xs text-secondary">
-        <Link to="/" search={{}} className="hover:text-fg">
+      <nav aria-label="Trilha de navegação" className="text-xs text-muted-foreground">
+        <Link to="/" search={{}} className="hover:text-foreground">
           Catálogo
         </Link>{" "}
         / <span>{item.title}</span>
@@ -88,7 +91,7 @@ export default function NftDetail() {
         <img
           src={item.image}
           alt={item.title}
-          className="aspect-square w-full rounded-xl border border-line-soft object-cover"
+          className="aspect-square w-full rounded-xl border border-border object-cover"
         />
 
         <div className="flex flex-col gap-4">
@@ -97,7 +100,7 @@ export default function NftDetail() {
             <Badge>{item.category}</Badge>
           </div>
           <h1 className="text-2xl font-bold md:text-3xl">{item.title}</h1>
-          <p className="text-sm text-muted">
+          <p className="text-sm text-muted-foreground">
             Coleção {item.collection.name} · por {item.author.name}
             {item.author.verified ? " ✓" : ""}
           </p>
@@ -106,13 +109,13 @@ export default function NftDetail() {
           <Card className="p-4">
             <dl className="grid grid-cols-2 gap-3 text-sm">
               <div>
-                <dt className="text-xs text-secondary">Preço</dt>
-                <dd data-testid="detail-price" className="text-xl font-bold text-accent">
+                <dt className="text-xs text-muted-foreground">Preço</dt>
+                <dd data-testid="detail-price" className="text-xl font-bold text-primary">
                   {formatEth(item.priceEth)} ETH
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-secondary">Edições disponíveis</dt>
+                <dt className="text-xs text-muted-foreground">Edições disponíveis</dt>
                 <dd data-testid="detail-stock" className="text-xl font-bold">
                   {item.availableQuantity}
                 </dd>
@@ -121,12 +124,12 @@ export default function NftDetail() {
           </Card>
 
           {soldOut && (
-            <p role="status" className="text-sm font-bold text-danger">
+            <p role="status" className="text-sm font-bold text-destructive">
               Este NFT está esgotado.
             </p>
           )}
           {!soldOut && maxed && (
-            <p role="status" className="text-sm text-muted">
+            <p role="status" className="text-sm text-muted-foreground">
               Você já tem todas as edições disponíveis no carrinho.
             </p>
           )}
@@ -154,14 +157,14 @@ export default function NftDetail() {
           <ul className="flex min-h-72 flex-col gap-3">
             {(reviews.data?.items ?? []).map((r) => (
               <li key={r.id}>
-                <Card className="p-4">
+                <Card className="gap-1 p-4">
                   <p className="text-sm font-bold">
                     {r.author}{" "}
-                    <span className="text-accent" aria-label={`${r.rating} de 5`}>
+                    <span className="text-primary" aria-label={`${r.rating} de 5`}>
                       {"★".repeat(r.rating)}
                     </span>
                   </p>
-                  <p className="mt-1 text-sm text-muted">{r.comment}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">{r.comment}</p>
                 </Card>
               </li>
             ))}

@@ -3,10 +3,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "../components/ui/button";
-import { Dialog, DialogClose, DialogContent } from "../components/ui/dialog";
-import { Field, Input, Select } from "../components/ui/field";
-import { Badge, Card, EmptyState, ErrorState, Skeleton } from "../components/ui/misc";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Field } from "../components/Field";
+import { Input } from "@/components/ui/input";
+import { nativeSelectClass } from "../components/Field";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState, ErrorState } from "../components/states";
 import { useSession } from "../hooks/useSession";
 import { parseError } from "../services/api";
 import {
@@ -119,7 +124,7 @@ export default function WalletsPage() {
                       {w.isPrimary && <Badge>Principal</Badge>}
                       <Badge>{w.network}</Badge>
                     </p>
-                    <p className="mt-1 break-all text-xs text-muted">
+                    <p className="mt-1 break-all text-xs text-muted-foreground">
                       {w.address}
                     </p>
                   </div>
@@ -137,7 +142,7 @@ export default function WalletsPage() {
                     )}
                     <Button
                       size="sm"
-                      variant="danger"
+                      variant="destructive"
                       onClick={(e) => {
                         lastTrigger.current = e.currentTarget;
                         setToRemove(w);
@@ -172,17 +177,21 @@ export default function WalletsPage() {
             </Field>
             <Field label="Rede" error={errors.network?.message}>
               {(p) => (
-                <Select {...p} {...form.register("network")}>
+                <select
+                  className={nativeSelectClass}
+                  {...p}
+                  {...form.register("network")}
+                >
                   <option>Ethereum</option>
                   <option>Polygon</option>
                   <option>Arbitrum</option>
-                </Select>
+                </select>
               )}
             </Field>
             <Field label="Apelido (opcional)" error={errors.label?.message}>
               {(p) => <Input {...p} {...form.register("label")} />}
             </Field>
-            <Button type="submit" disabled={add.isPending}>
+            <Button type="submit" loading={add.isPending}>
               {add.isPending ? "Adicionando..." : "Adicionar carteira"}
             </Button>
           </form>
@@ -195,25 +204,27 @@ export default function WalletsPage() {
             e.preventDefault();
             lastTrigger.current?.focus();
           }}
-          title="Remover carteira?"
-          description={
-            toRemove
-              ? `${toRemove.label} (${toRemove.address.slice(0, 10)}…) deixará de aparecer no pagamento.`
-              : undefined
-          }
         >
-          <div className="flex justify-end gap-2">
+          <DialogHeader>
+            <DialogTitle>Remover carteira?</DialogTitle>
+            <DialogDescription>
+              {toRemove
+                ? `${toRemove.label} (${toRemove.address.slice(0, 10)}…) deixará de aparecer no pagamento.`
+                : "Esta carteira deixará de aparecer no pagamento."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
             <DialogClose asChild>
               <Button variant="outline">Cancelar</Button>
             </DialogClose>
             <Button
-              variant="danger"
-              disabled={remove.isPending}
+              variant="destructive"
+              loading={remove.isPending}
               onClick={() => toRemove && remove.mutate(toRemove.id)}
             >
               Confirmar remoção
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

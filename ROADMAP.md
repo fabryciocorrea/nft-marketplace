@@ -16,10 +16,10 @@ Legenda: ✅ feito e testado · 🟡 parcial · ❌ não feito · ⛔ era elimin
 | Páginas e rotas | 1 página + modais | 12 rotas (6 públicas e 6 privadas, com guarda e retorno ao contexto) |
 | Backend simulado | 4 rotas | ~40 rotas, 18 códigos de erro, 7 cenários, Socket.IO simulado |
 | E2E | 12 testes (não confirmados) | **107 testes × 2 viewports**, API + interface, também contra o build de produção |
-| Tema Kurio | claro/azul | tokens do Figma, Roboto Mono, bordas com contraste corrigido |
+| Visual | claro/azul genérico | DESIGN-SYSTEM.md: tokens, Inter, shadcn via CLI, filtro dropdown composto |
 | Lighthouse | inexistente | script + relatório (A11y/Boas práticas/SEO 100) |
 
-Fora do que foi entregue de forma completa: **fidelidade pixel a pixel ao Figma**, **shadcn via CLI** e **performance móvel ≥ 80 em todas as rotas** (veja a seção 6).
+Fora do que foi entregue de forma completa: **fidelidade pixel a pixel às referências visuais** e **performance móvel ≥ 80 em todas as rotas**.
 
 ---
 
@@ -105,10 +105,12 @@ Origem: `FRONTEND-KURIO.md` §2 e `GAPS.md` §3.
 | F-29 | Acessibilidade: foco, teclado, `aria-live`, diálogos, rótulos, `alert` | ✅ | `ui-a11y` |
 | F-30 | Responsivo 390 / 768 / 1440 sem rolagem horizontal | ✅ | `ui-a11y` |
 | F-31 | Contraste dos tokens (bordas ≥ 3:1) | ✅ | `ui-a11y` · tokens |
-| F-32 | Tema KURIO (cores, Roboto Mono, escala) | ✅ | tokens em `index.css` |
+| F-32 | Design system (tokens, Inter, raios, sombras) | ✅ | `index.css`; `ui-a11y` · tokens |
 | F-33 | `prefers-reduced-motion` | ✅ | `ui-a11y` |
-| F-34 | shadcn/ui ⛔ | 🟡 | componentes no padrão (Radix + cva), sem a CLI |
-| F-35 | Fidelidade ao layout do Figma | 🟡 | tokens e estrutura; espaçamentos/composição são interpretação |
+| F-34 | shadcn/ui ⛔ | ✅ | `components.json` + componentes gerados pela CLI (preset Vega/Radix) |
+| F-38 | **Filtro único em dropdown composto** (todos os atributos) | ✅ | `ui-catalog` · facetas, preço, paginação |
+| F-39 | Menu móvel em Sheet; filtro como folha inferior no mobile | ✅ | `ui-catalog`, `ui-a11y` (mobile) |
+| F-35 | Fidelidade às referências visuais | 🟡 | tokens, tipografia e componentes do DS; sem comparação quadro a quadro |
 | F-36 | Layout mobile específico (Perfil/Carteiras/Confirmação sem frame) | 🟡 | responsivo próprio |
 | F-37 | Lighthouse | 🟡 | script e relatório; performance móvel 50–78 |
 
@@ -124,14 +126,15 @@ Origem: `FRONTEND-KURIO.md` §2 e `GAPS.md` §3.
 | 3 · Conta | Cadastro, perfil, senha, carteiras, favoritos idempotentes, carrinho no servidor com merge | ✅ |
 | 4 · Tempo real | Socket.IO simulado, envelope versionado, descarte, reconciliação, listeners limpos | ✅ |
 | 5 · Qualidade | Cenários, `__reset`, rate limit, 107 testes E2E, a11y, Lighthouse | ✅ |
-| 6 · Interface | Router, páginas, tema, shadcn-style, RHF + Zod, skeletons, rotas privadas | ✅ |
+| 6 · Interface | Router, páginas, RHF + Zod, skeletons, rotas privadas | ✅ |
+| 7 · Refatoração visual | DESIGN-SYSTEM.md, shadcn via CLI, filtro dropdown composto, header com Sheet, hero com dados reais | ✅ |
 
 ## 5. Próximos passos (o que ainda falta)
 
 Ordenados por impacto na avaliação:
 
-1. **Fidelidade ao Figma (F-35)** — comparar tela a tela com o design (espaçamentos, grid do hero, cards, carrinho em duas colunas) e ajustar. Requer acesso aos frames; fiz a interpretação a partir do `FRONTEND-KURIO.md`.
-2. **shadcn via CLI (F-34)** — rodar `npx shadcn init`, gerar `components.json` e substituir `Button`, `Input`, `Dialog`, `Skeleton`, `Badge` pelos gerados, mantendo os tokens.
+1. **Fidelidade visual (F-35)** — comparar tela a tela com as referências (VerusNFT/Aura) e ajustar. Hoje segue o `DESIGN-SYSTEM.md`, sem os arquivos originais para medir.
+2. ~~shadcn via CLI (F-34)~~ — **feito**: `components.json` e componentes gerados pela CLI.
 3. **Performance móvel (F-37)** — carregar a API simulada em paralelo ao app (hoje bloqueia a primeira renderização), `manualChunks` para vendor e `fetchpriority` na primeira imagem. Meta: ≥ 80.
 4. **`cart.updated` (B-36)** — evento opcional para sincronizar abas.
 5. **Teste do cancelamento de resposta obsoleta (F-06)** — interceptar duas buscas encadeadas e garantir que a antiga não sobrescreve a nova.
@@ -147,7 +150,9 @@ Ordenados por impacto na avaliação:
 | "Banco" em `localStorage` | `schemaVersion`; relê a cada requisição (abas); `__reset` nos testes |
 | Eventos de socket não cruzam abas (barramento por aba) | Documentado; reconciliação por REST cobre o caso |
 | 239 × 284 nas facetas do Figma | Cada NFT tem 1 coleção e 1 rede; somas coincidem (testado) |
-| Bordas do Figma com contraste < 3:1 | `#8A5A3C` para componentes; originais só como decoração |
+| Bordas do DS com contraste < 3:1 | `--input #7B7F92` para campos e botões; `--border` só decorativo |
+| CLI do shadcn gerou imports para um pacote `cn` inexistente | `src/lib/utils.ts` e imports corrigidos para `@/lib/utils` |
+| Popover do filtro ficava fora da viewport no mobile | folha inferior (`Sheet`) abaixo de 768 px |
 
 ## 7. Evidências
 

@@ -1,8 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Button } from "../components/ui/button";
-import { Badge, Card, EmptyState, ErrorState, Skeleton } from "../components/ui/misc";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState, ErrorState } from "../components/states";
 import { useSession } from "../hooks/useSession";
 import { parseError } from "../services/api";
 import { fetchOrders } from "../services/endpoints";
@@ -57,11 +60,11 @@ export default function OrdersPage() {
                 <Link
                   to="/order/$id"
                   params={{ id: o.id }}
-                  className="font-bold hover:text-accent"
+                  className="font-bold hover:text-primary"
                 >
                   {o.id}
                 </Link>
-                <p className="text-xs text-muted">
+                <p className="text-xs text-muted-foreground">
                   {new Date(o.createdAt).toLocaleString("pt-BR")} ·{" "}
                   {o.items.length} {o.items.length === 1 ? "item" : "itens"}
                 </p>
@@ -70,7 +73,7 @@ export default function OrdersPage() {
                 <Badge data-testid={`order-badge-${o.id}`}>
                   {LABEL[o.status]}
                 </Badge>
-                <span className="font-bold text-accent">
+                <span className="font-bold text-primary">
                   {formatEth(o.total)} ETH
                 </span>
               </div>

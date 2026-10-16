@@ -1,6 +1,14 @@
 import { expect, test } from "@playwright/test";
 import type { Page } from "@playwright/test";
-import { LARISSA, api, apiLogin, boot, mocks, uiLogin } from "./helpers";
+import {
+  LARISSA,
+  api,
+  apiLogin,
+  boot,
+  logout,
+  mocks,
+  uiLogin,
+} from "./helpers";
 
 async function stats(page: Page) {
   const text = await page.getByTestId("realtime-stats").textContent();
@@ -115,7 +123,7 @@ test.describe("UI · tempo real (Socket.IO simulado)", () => {
     await uiLogin(page, LARISSA);
     await expect(page.getByTestId("user-name")).toBeVisible();
     await expect(page.getByTestId("realtime-status")).toContainText("conectado");
-    await page.getByRole("button", { name: "Sair" }).click();
+    await logout(page);
     await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible();
     await expect(page.getByTestId("realtime-status")).toContainText("conectado");
     await expect.poll(() => mocks<number>(page, "socket.count()")).toBe(1);

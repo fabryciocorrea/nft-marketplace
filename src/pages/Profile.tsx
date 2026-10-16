@@ -3,9 +3,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "../components/ui/button";
-import { Field, Input } from "../components/ui/field";
-import { Card, Skeleton } from "../components/ui/misc";
+import { Button } from "@/components/ui/button";
+import { Field } from "../components/Field";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { SESSION_KEY, useSession } from "../hooks/useSession";
 import { parseError } from "../services/api";
 import {
@@ -117,7 +119,7 @@ function AvatarForm({ user }: { user: User }) {
         ) : (
           <div
             aria-hidden="true"
-            className="flex h-16 w-16 items-center justify-center rounded-full bg-elevated text-xl font-bold text-accent"
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-xl font-bold text-primary"
           >
             {user.name.slice(0, 1).toUpperCase()}
           </div>

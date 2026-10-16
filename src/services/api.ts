@@ -99,10 +99,17 @@ export function parseError(
 ): ParsedError {
   if (axios.isAxiosError<ApiErrorBody>(error)) {
     const body = error.response?.data?.error;
+    const status = error.response?.status ?? null;
+    // Sem corpo de erro da API: diz o que aconteceu em vez de uma mensagem genérica
+    const diagnostic = body?.message
+      ? null
+      : status === null
+        ? "Sem resposta da API simulada. Recarregue a página para reativá-la e tente novamente."
+        : `A API simulada respondeu fora do contrato (HTTP ${status}). Recarregue a página e tente novamente.`;
     return {
-      status: error.response?.status ?? null,
+      status,
       code: body?.code ?? "NETWORK_ERROR",
-      message: body?.message ?? fallback,
+      message: body?.message ?? diagnostic ?? fallback,
       fields: body?.details?.fields ?? {},
       details: (body?.details as Record<string, unknown>) ?? {},
     };

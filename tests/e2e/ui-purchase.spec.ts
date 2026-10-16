@@ -8,7 +8,8 @@ import {
   boot,
   mocks,
   setScenario,
-  uiLogin,
+  uiLogin,  logout,
+  toasts,
 } from "./helpers";
 
 test.describe("UI · carrinho", () => {
@@ -80,7 +81,7 @@ test.describe("UI · carrinho", () => {
     await page.getByRole("button", { name: "Adicionar ao carrinho" }).click();
     await expect(page.getByTestId("cart-count")).toHaveText("1");
 
-    await page.getByRole("button", { name: "Sair" }).click();
+    await logout(page);
     await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible();
     await expect(page.getByTestId("cart-count")).toHaveText("0");
 
@@ -314,7 +315,7 @@ test.describe("UI · sessão expirada", () => {
     await page.getByRole("button", { name: "Confirmar compra" }).click();
 
     await expect(page).toHaveURL(/\/login\?redirect=%2Fcheckout/);
-    await expect(page.getByTestId("toast").first()).toContainText(
+    await expect(toasts(page).first()).toContainText(
       "Sua sessão expirou",
     );
 

@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, getRouteApi } from "@tanstack/react-router";
-import { Button } from "../components/ui/button";
-import { Card, EmptyState, ErrorState, Skeleton } from "../components/ui/misc";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState, ErrorState } from "../components/states";
 import { useSession } from "../hooks/useSession";
 import { parseError } from "../services/api";
 import { fetchOrder, fetchReceipt } from "../services/endpoints";
@@ -67,9 +69,9 @@ export default function OrderPage() {
     <div className="mx-auto flex max-w-2xl flex-col gap-6">
       <div role="status" aria-live="polite" data-testid="order-status">
         {o.status === "pending" && (
-          <div className="rounded-xl border border-line bg-card p-6 text-center">
+          <div className="rounded-xl border border-border bg-card p-6 text-center">
             <p className="text-lg font-bold">Processando o seu pedido...</p>
-            <p className="mt-1 text-sm text-muted">
+            <p className="mt-1 text-sm text-muted-foreground">
               Aguarde a confirmação. Você pode recarregar a página com
               segurança.
             </p>
@@ -78,13 +80,13 @@ export default function OrderPage() {
         {o.status === "confirmed" && (
           <div className="rounded-xl border border-success bg-success/10 p-6 text-center">
             <p className="text-lg font-bold text-success">Pedido confirmado!</p>
-            <p className="mt-1 text-xs text-muted">Pedido {o.id}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Pedido {o.id}</p>
           </div>
         )}
         {o.status === "failed" && (
-          <div className="rounded-xl border border-danger bg-danger/10 p-6 text-center">
-            <p className="text-lg font-bold text-danger">Pagamento recusado</p>
-            <p className="mt-1 text-sm text-muted">
+          <div className="rounded-xl border border-destructive bg-destructive/10 p-6 text-center">
+            <p className="text-lg font-bold text-destructive">Pagamento recusado</p>
+            <p className="mt-1 text-sm text-muted-foreground">
               Nenhum valor foi cobrado e as edições voltaram ao estoque. Seus
               itens continuam no carrinho.
             </p>
@@ -104,7 +106,7 @@ export default function OrderPage() {
               />
               <div className="flex-1 text-sm">
                 <p className="font-bold">{item.title}</p>
-                <p className="text-xs text-muted">
+                <p className="text-xs text-muted-foreground">
                   {formatEth(item.unitPrice)} ETH × {item.quantity}
                 </p>
               </div>
@@ -114,36 +116,36 @@ export default function OrderPage() {
 
         <dl className="mt-3 flex flex-col gap-1.5 text-sm">
           <div className="flex justify-between">
-            <dt className="text-muted">Subtotal</dt>
+            <dt className="text-muted-foreground">Subtotal</dt>
             <dd>{formatEth(o.subtotal)} ETH</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-muted">Desconto</dt>
+            <dt className="text-muted-foreground">Desconto</dt>
             <dd>{formatEth(o.discount)} ETH</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-muted">Taxa de rede ({o.network})</dt>
+            <dt className="text-muted-foreground">Taxa de rede ({o.network})</dt>
             <dd>{formatEth(o.networkFee)} ETH</dd>
           </div>
-          <div className="flex justify-between border-t border-line pt-2 text-base font-bold">
+          <div className="flex justify-between border-t border-border pt-2 text-base font-bold">
             <dt>Total</dt>
-            <dd data-testid="order-total" className="text-accent">
+            <dd data-testid="order-total" className="text-primary">
               {formatEth(o.total)} ETH
             </dd>
           </div>
         </dl>
 
-        <dl className="mt-4 grid gap-2 text-xs text-muted sm:grid-cols-2">
+        <dl className="mt-4 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
           <div>
-            <dt className="text-secondary">Carteira</dt>
+            <dt className="text-muted-foreground">Carteira</dt>
             <dd className="break-all">{o.walletAddress}</dd>
           </div>
           <div>
-            <dt className="text-secondary">Data</dt>
+            <dt className="text-muted-foreground">Data</dt>
             <dd>{new Date(o.createdAt).toLocaleString("pt-BR")}</dd>
           </div>
           <div className="sm:col-span-2">
-            <dt className="text-secondary">Transação (simulada)</dt>
+            <dt className="text-muted-foreground">Transação (simulada)</dt>
             <dd className="break-all">{o.txHash}</dd>
           </div>
         </dl>
@@ -154,7 +156,7 @@ export default function OrderPage() {
               href={receipt.data.explorerUrl}
               target="_blank"
               rel="noreferrer"
-              className="text-accent underline"
+              className="text-primary underline"
             >
               Ver no explorador de blocos
             </a>

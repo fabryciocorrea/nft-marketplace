@@ -21,14 +21,14 @@ O plano detalhado e a rastreabilidade de requisitos estão em [ROADMAP.md](./ROA
 | Perfil (dados, avatar, senha) e Carteiras (CRUD, principal única) | Implementado |
 | Favoritos idempotentes com atualização otimista e rollback | Implementado |
 | Tempo real: `nft.updated` / `order.updated` por Socket.IO simulado, com descarte e reconciliação | Implementado |
-| Tema KURIO (tokens do Figma, Roboto Mono), skeleton com shimmer, estados vazio/erro | Implementado |
+| Design system claro (DESIGN-SYSTEM.md): tokens, Inter, cards 20 px, hero, filtro dropdown composto, skeletons, estados vazio/erro | Implementado |
 | Acessibilidade: foco, teclado, `aria-live`, diálogos com foco preso e `Esc`, contraste dos tokens | Implementado (testado) |
 | Responsivo em 390 / 768 / 1440 sem rolagem horizontal | Implementado (testado) |
 | Testes E2E Playwright (desktop e mobile) cobrindo API e interface | Implementado — 107 testes × 2 projetos |
 | Auditoria Lighthouse automatizada (`npm run lighthouse`) | Implementado |
-| Deploy na Vercel com mocks ativos | Configurado (veja seção 12) |
-| Fidelidade pixel a pixel ao Figma | **Parcial** (tokens e tipografia; layout é interpretação) |
-| `shadcn/ui` | **Parcial**: componentes no padrão shadcn escritos à mão (sem a CLI) |
+| Deploy na Vercel com mocks ativos | Configurado (veja seção 13) |
+| Fidelidade pixel a pixel às referências visuais | **Parcial** (tokens, tipografia e componentes do DS; sem comparação quadro a quadro) |
+| `shadcn/ui` via CLI (`components.json`, preset Vega/Radix) | Implementado |
 | `cart.updated` (Socket.IO, opcional) e blog/CMS reais | Não implementado |
 
 ## 2. Stack
@@ -36,8 +36,10 @@ O plano detalhado e a rastreabilidade de requisitos estão em [ROADMAP.md](./ROA
 | Responsabilidade | Tecnologia | Uso |
 | --- | --- | --- |
 | Interface | React 19 + TypeScript + Vite | Em uso |
-| Estilo | Tailwind CSS v4 (`@theme` com os tokens KURIO) | Em uso |
-| Componentes | Radix (Dialog, Slot) + `cva` + `tailwind-merge`, no padrão shadcn | Em uso (`src/components/ui`) |
+| Estilo | Tailwind CSS v4 (`@theme inline` + variáveis do shadcn) | Em uso |
+| Componentes | shadcn/ui via CLI: button, input, label, dialog, sheet, tabs, popover, checkbox, badge, avatar, card, alert, skeleton, sonner (Radix) | Em uso (`src/components/ui`, `components.json`) |
+| Fonte | Inter Variable (`@fontsource-variable/inter`, sem rede externa) | Em uso |
+| Ícones | lucide-react | Em uso |
 | Roteamento | TanStack Router (código, rotas lazy, `validateSearch` com Zod) | Em uso |
 | Estado remoto | TanStack Query | Em uso |
 | Estado de UI | Zustand (`persist` no carrinho anônimo; toasts) | Em uso |
@@ -53,8 +55,9 @@ O plano detalhado e a rastreabilidade de requisitos estão em [ROADMAP.md](./ROA
 
 ```text
 src/
-├── components/        Layout, Header/Footer, NftCard, FavoriteButton, FilterPanel
-│   └── ui/            button, field (Input/Select/Field), dialog, misc (Skeleton, Badge, Card, Empty/ErrorState)
+├── components/        Layout (Header, Sheet móvel, Footer), NftCard, FavoriteButton
+│   ├── FilterDropdown, Field, states (EmptyState, ErrorState, PageTitle)
+│   └── ui/            componentes gerados pela CLI do shadcn
 ├── hooks/             useSession (sessão, merge do carrinho, limpeza), useCart (visitante x servidor)
 ├── pages/             Home, NftDetail, Cart, Checkout, Order, Orders, Favorites, Auth, Profile, Wallets
 ├── services/          api.ts (Axios + refresh), endpoints.ts (contratos), socket.ts, toast.ts, attempt.ts, useCartStore.ts
@@ -183,16 +186,39 @@ Ativáveis por URL (`/?scenario=slow,flaky`) ou em teste (`__kurioMocks.setScena
 
 Favoritos usam `onMutate` (otimista) + snapshot e `onError` (rollback). O logout remove os dados privados do cache.
 
-## 9. Acessibilidade e responsividade
+## 9. Design system e interface
+
+Fonte: `DESIGN-SYSTEM.md` (tema claro, azul de ação, Inter, cards arredondados).
+
+| Item | Implementação |
+| --- | --- |
+| Tokens | `src/index.css`: variáveis do shadcn (`--primary #246AFB`, `--foreground #111320`, `--border #E4E7EC`…), raios 8/12/20/28, sombras `card` e `float` |
+| Header | logo, navegação, busca com ícone, Entrar (outline) e Cadastrar (dark); menu móvel em `Sheet` |
+| Hero | título display com palavra em azul, dois cards rotacionados com os NFTs mais curtidos (**dados reais da API**) e `StatBlock` com totais reais (NFTs, coleções, redes). Nenhum número é inventado |
+| NftCard | imagem 4:3 com raio 16, favorito, criador com avatar, preço em ETH (Decimal), rede, **Comprar agora** e botão de carrinho; `data-testid="nft-card-${id}"` mantido |
+| **Filtro** | um **dropdown composto** (Popover no desktop, folha inferior no mobile) com categoria, ordenação, coleções, redes e faixa de preço; filtros ativos viram chips removíveis; tudo na URL |
+| Diálogos | `Dialog`/`Sheet` do shadcn: foco preso, `Esc`, foco devolvido ao gatilho |
+| Feedback | `sonner` (região `aria-live`), `Alert` para erros, `Skeleton` no carregamento |
+
+**Desvios deliberados do DS (acessibilidade):**
+
+| Token | DS | Usado | Motivo |
+| --- | --- | --- | --- |
+| `--input` (borda de campos/botões) | `#E4E7EC` | `#7B7F92` | 1,2:1 não atende WCAG 1.4.11; o novo valor tem 4,0:1. `--border` continua decorativo |
+| `--success` | `#16A34A` | `#15803D` | 3,3:1 no branco; o novo valor tem 5,0:1 |
+| `--warning` | `#D97706` | `#B45309` | contraste de texto |
+| Marca | "NFT Marketplace" | KURIO | mantida a marca do desafio |
+
+## 10. Acessibilidade e responsividade
 
 - Landmarks (`banner`, `navigation`, `main`, `contentinfo`), um `h1` por página, link "ir para o conteúdo", título do documento por rota.
 - Todos os campos têm rótulo; erros com `role="alert"` e `aria-invalid`; quantidade do carrinho com `aria-live`.
 - Diálogos Radix: foco preso, `Esc` fecha, foco volta ao gatilho.
 - Foco visível (2 px); `prefers-reduced-motion` desliga o shimmer.
-- Contraste (testado): textos ≥ 4,5:1; **bordas de campos/botões usam `#8A5A3C` (≥ 3:1)**; as bordas originais do Figma (`#3F2319`, `#55321F`) ficaram só como decoração.
+- Contraste (testado): textos ≥ 4,5:1; bordas de campos e botões ≥ 3:1 (`--input`).
 - Filtros recolhíveis no mobile; grade 1 / 2 / 3 colunas; sem rolagem horizontal em 390, 768 e 1440.
 
-## 10. Testes e qualidade
+## 11. Testes e qualidade
 
 | Arquivo | Testes | Foco |
 | --- | --- | --- |
@@ -219,31 +245,31 @@ npm run build && npm run lighthouse
 
 | Rota | Performance | Acessibilidade | Boas práticas | SEO |
 | --- | --- | --- | --- | --- |
-| `/` | 50–67 | 100 | 100 | 100 |
+| `/` | 50–67 (medido antes do redesign) | 100 | 100 | 100 |
 | `/nfts/1` | 52–68 | 100 | 100 | 100 |
 | `/cart` | 63–74 | 100 | 100 | 100 |
 | `/login` | 64–78 | 100 | 100 | 100 |
 
 A performance varia entre execuções (throttling simulado). O principal custo é o MSW + pacote da API simulada (~440 kB) carregado antes da primeira renderização, o que não existiria com uma API real.
 
-## 11. Decisões de design e inconsistências do Figma
+## 12. Decisões de design e inconsistências do Figma
 
 - **Facetas:** no Figma as coleções somam 239 e as redes 284 para o mesmo catálogo. Aqui cada NFT pertence a **uma** coleção e **uma** rede; as contagens de cada faceta consideram os demais filtros e as somas coincidem (testado). Se um NFT puder existir em várias redes, o modelo precisa mudar.
-- **Bordas:** ver seção 9.
+- **Bordas:** ver os desvios na seção 9.
 - **Telas sem frame mobile no Figma** (Perfil, Carteiras, Confirmação): layout responsivo próprio.
 
-## 12. Deploy
+## 13. Deploy
 
 - `vercel.json` reescreve todas as rotas para `index.html` (SPA).
 - `.npmrc` com `legacy-peer-deps=true`: `@mswjs/socket.io-binding@0.2` declara `peer msw@^2` e o projeto usa MSW 3 (funciona; ver seção 6).
 - `VITE_ENABLE_MOCKS=true` em `.env.production`: o MSW roda também no build publicado.
 
-## 13. Limitações conhecidas
+## 14. Limitações conhecidas
 
 - Token em `localStorage` e senhas com SHA-256 salgado só valem para a simulação. Produção: cookie `HttpOnly` + CSRF e Argon2/bcrypt.
 - O "banco" está no `localStorage`: vale por navegador, ~5 MB; abas compartilham os dados mas **não os eventos** (o barramento é por aba).
 - O servidor simulado roda no cliente: não há concorrência real entre usuários.
-- Fidelidade ao Figma é parcial (tokens, tipografia e estrutura; espaçamentos e composição são interpretação).
+- Fidelidade visual às referências é parcial: tokens e componentes seguem o DS, mas não houve comparação quadro a quadro.
 - Performance móvel no Lighthouse abaixo de 80 em algumas rotas (custo do MSW).
-- `shadcn/ui`: componentes escritos à mão no padrão (Radix + cva), sem `components.json` nem CLI.
+- A CLI do shadcn gerou `src/lib/utils.ts` e imports apontando para um pacote `cn` inexistente; foi corrigido à mão (`@/lib/utils`). Ao rodar `shadcn add` de novo, confira os imports.
 - `@mswjs/socket.io-binding` ainda não declara suporte ao MSW 3; pode quebrar em atualizações.

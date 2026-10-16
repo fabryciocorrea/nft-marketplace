@@ -148,9 +148,10 @@ export default function NftDetail() {
           Avaliações
         </h2>
         {reviews.isLoading ? (
-          <Skeleton className="h-20" />
+          // altura reservada: evita deslocamento de layout quando a lista chega
+          <Skeleton className="h-72" />
         ) : (
-          <ul className="flex flex-col gap-3">
+          <ul className="flex min-h-72 flex-col gap-3">
             {(reviews.data?.items ?? []).map((r) => (
               <li key={r.id}>
                 <Card className="p-4">
@@ -172,6 +173,13 @@ export default function NftDetail() {
         <h2 id="related-title" className="mb-3 text-xl font-bold">
           NFTs relacionados
         </h2>
+        {related.isLoading && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" aria-busy="true">
+            {Array.from({ length: 4 }, (_, i) => (
+              <Skeleton key={i} className="h-96" />
+            ))}
+          </div>
+        )}
         <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {(related.data ?? []).map((n) => (
             <li key={n.id}>

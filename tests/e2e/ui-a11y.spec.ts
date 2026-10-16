@@ -146,6 +146,8 @@ test.describe("Acessibilidade", () => {
     page,
   }) => {
     await boot(page, "/cart");
+    // espera a interface renderizar antes de usar o teclado
+    await expect(page.getByRole("main")).toBeVisible();
     await page.keyboard.press("Tab");
     const skip = page.getByRole("link", { name: "Ir para o conteúdo" });
     await expect(skip).toBeFocused();

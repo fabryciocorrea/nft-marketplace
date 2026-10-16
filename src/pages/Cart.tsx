@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Button } from "../components/ui/button";
-import { Card, EmptyState, Skeleton } from "../components/ui/misc";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState } from "../components/states";
 import { useCart } from "../hooks/useCart";
 import { useSession } from "../hooks/useSession";
 import { formatEth } from "../utils/money";
@@ -58,11 +60,11 @@ export default function CartPage() {
                   <Link
                     to="/nfts/$id"
                     params={{ id: row.nft.id }}
-                    className="font-bold hover:text-accent"
+                    className="font-bold hover:text-primary"
                   >
                     {row.nft.title}
                   </Link>
-                  <p className="text-xs text-muted">
+                  <p className="text-xs text-muted-foreground">
                     {formatEth(row.nft.priceEth)} ETH cada · {row.nft.network}
                   </p>
                   <div className="mt-2 flex items-center gap-2">
@@ -96,12 +98,12 @@ export default function CartPage() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-accent">
+                  <p className="font-bold text-primary">
                     {formatEth(row.lineTotal)} ETH
                   </p>
                   <button
                     onClick={() => cart.remove(row.nft)}
-                    className="mt-1 cursor-pointer text-xs text-danger underline"
+                    className="mt-1 cursor-pointer text-xs text-destructive underline"
                     aria-label={`Remover ${row.nft.title} do carrinho`}
                   >
                     Remover
@@ -120,18 +122,18 @@ export default function CartPage() {
           </h2>
           <dl className="mt-4 flex flex-col gap-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-muted">Subtotal</dt>
+              <dt className="text-muted-foreground">Subtotal</dt>
               <dd data-testid="cart-subtotal" className="font-bold">
                 {formatEth(cart.subtotal)} ETH
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted">Taxa de rede</dt>
-              <dd className="text-secondary">calculada no pagamento</dd>
+              <dt className="text-muted-foreground">Taxa de rede</dt>
+              <dd className="text-muted-foreground">calculada no pagamento</dd>
             </div>
           </dl>
           {!user && (
-            <p className="mt-4 text-xs text-muted">
+            <p className="mt-4 text-xs text-muted-foreground">
               Entre na sua conta para pagar. Seu carrinho será mantido.
             </p>
           )}

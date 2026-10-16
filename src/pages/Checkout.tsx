@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/field";
-import { Card, EmptyState, ErrorState, Skeleton } from "../components/ui/misc";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState, ErrorState } from "../components/states";
 import { useCart } from "../hooks/useCart";
 import { useSession } from "../hooks/useSession";
 import { parseError } from "../services/api";
@@ -144,8 +146,8 @@ export default function Checkout() {
                 key={w.id}
                 className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 ${
                   walletId === w.id
-                    ? "border-primary bg-elevated"
-                    : "border-line"
+                    ? "border-primary bg-secondary"
+                    : "border-border"
                 }`}
               >
                 <input
@@ -158,9 +160,11 @@ export default function Checkout() {
                 <span className="flex-1">
                   <span className="block font-bold">
                     {w.label}
-                    {w.isPrimary ? " · principal" : ""}
+                    {w.isPrimary && w.label.toLowerCase() !== "principal"
+                      ? " · principal"
+                      : ""}
                   </span>
-                  <span className="text-xs text-muted">
+                  <span className="text-xs text-muted-foreground">
                     {shorten(w.address)} · {w.network}
                   </span>
                 </span>
@@ -207,7 +211,7 @@ export default function Checkout() {
             )}
           </form>
           {quoteError?.code === "COUPON_INVALID" && (
-            <p role="alert" className="mt-2 text-sm text-danger">
+            <p role="alert" className="mt-2 text-sm text-destructive">
               {quoteError.message}
             </p>
           )}
@@ -221,7 +225,7 @@ export default function Checkout() {
             {cart.rows.map((r) => (
               <li
                 key={r.nft.id}
-                className="flex justify-between gap-3 rounded-lg border border-line-soft bg-card p-3 text-sm"
+                className="flex justify-between gap-3 rounded-lg border border-border bg-card p-3 text-sm"
               >
                 <span>
                   {r.nft.title} × {r.quantity}
@@ -253,20 +257,20 @@ export default function Checkout() {
           {q && (
             <dl className="mt-4 flex flex-col gap-2 text-sm" data-testid="quote">
               <div className="flex justify-between">
-                <dt className="text-muted">Subtotal</dt>
+                <dt className="text-muted-foreground">Subtotal</dt>
                 <dd data-testid="quote-subtotal">{formatEth(q.subtotal)} ETH</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted">Desconto</dt>
+                <dt className="text-muted-foreground">Desconto</dt>
                 <dd data-testid="quote-discount">{formatEth(q.discount)} ETH</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-muted">Taxa de rede ({q.network})</dt>
+                <dt className="text-muted-foreground">Taxa de rede ({q.network})</dt>
                 <dd data-testid="quote-fee">{formatEth(q.networkFee)} ETH</dd>
               </div>
-              <div className="mt-2 flex justify-between border-t border-line pt-3 text-base font-bold">
+              <div className="mt-2 flex justify-between border-t border-border pt-3 text-base font-bold">
                 <dt>Total</dt>
-                <dd data-testid="quote-total" className="text-accent">
+                <dd data-testid="quote-total" className="text-primary">
                   {formatEth(q.total)} ETH
                 </dd>
               </div>
@@ -274,7 +278,7 @@ export default function Checkout() {
           )}
 
           {q && q.warnings.length > 0 && (
-            <ul role="alert" className="mt-3 text-sm text-danger">
+            <ul role="alert" className="mt-3 text-sm text-destructive">
               {q.warnings.map((w) => (
                 <li key={w.nftId}>{w.message}</li>
               ))}
@@ -285,7 +289,7 @@ export default function Checkout() {
             <p
               role="alert"
               data-testid="order-error"
-              className="mt-4 rounded-lg border border-danger bg-danger/10 p-3 text-sm text-danger"
+              className="mt-4 rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
             >
               {orderError.message}
             </p>
@@ -303,7 +307,7 @@ export default function Checkout() {
           >
             {order.isPending ? "Enviando pedido..." : "Confirmar compra"}
           </Button>
-          <p className="mt-2 text-xs text-secondary">
+          <p className="mt-2 text-xs text-muted-foreground">
             A compra só é confirmada depois da resposta da API.
           </p>
         </Card>

@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import NftCard from "../components/NftCard";
-import { Button } from "../components/ui/button";
-import { EmptyState, ErrorState, Skeleton } from "../components/ui/misc";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyState, ErrorState } from "../components/states";
 import { useSession } from "../hooks/useSession";
 import { parseError } from "../services/api";
 import { fetchFavorites } from "../services/endpoints";

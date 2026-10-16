@@ -1,11 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useRouterState } from "@tanstack/react-router";
+import { HeartIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useSession } from "../hooks/useSession";
 import { parseError } from "../services/api";
 import { setFavorite } from "../services/endpoints";
 import { toast } from "../services/toast";
 import type { NFT, Page } from "../types";
-import { cn } from "../lib/cn";
 
 type Snapshot = [readonly unknown[], unknown][];
 
@@ -70,11 +71,14 @@ export default function FavoriteButton({ nft }: { nft: NFT }) {
           : `Favoritar ${nft.title}`
       }
       className={cn(
-        "flex h-9 min-w-9 cursor-pointer items-center justify-center gap-1 rounded-full border border-line bg-ink/80 px-2 text-xs font-bold",
-        nft.isLiked ? "text-accent" : "text-muted",
+        "flex h-9 min-w-9 cursor-pointer items-center justify-center gap-1 rounded-full border bg-background/95 px-2.5 text-xs font-semibold shadow-sm transition-colors hover:bg-background",
+        nft.isLiked ? "text-destructive" : "text-muted-foreground",
       )}
     >
-      <span aria-hidden="true">{nft.isLiked ? "♥" : "♡"}</span>
+      <HeartIcon
+        aria-hidden="true"
+        className={cn("size-4", nft.isLiked && "fill-current")}
+      />
       <span>{nft.likes}</span>
     </button>
   );

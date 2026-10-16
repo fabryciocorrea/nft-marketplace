@@ -6,14 +6,38 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
+import {
+  HeartIcon,
+  MenuIcon,
+  PackageIcon,
+  SearchIcon,
+  ShoppingCartIcon,
+  UserIcon,
+  WalletIcon,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Toaster } from "@/components/ui/sonner";
 import { useCart } from "../hooks/useCart";
 import { clearPrivateData, useSession } from "../hooks/useSession";
 import { SESSION_EXPIRED, authEvents } from "../services/api";
 import { logout } from "../services/endpoints";
-import { connectSocket, disconnectSocket, useRealtime } from "../services/socket";
-import { toast, useToasts } from "../services/toast";
-import { cn } from "../lib/cn";
+import {
+  connectSocket,
+  disconnectSocket,
+  useRealtime,
+} from "../services/socket";
+import { toast } from "../services/toast";
 
 const PRIVATE_PREFIXES = [
   "/checkout",
@@ -24,39 +48,57 @@ const PRIVATE_PREFIXES = [
   "/favorites",
 ];
 
-function Toaster() {
-  const { toasts, dismiss } = useToasts();
+const TITLES: [RegExp, string][] = [
+  [/^\/nfts\//, "Detalhes do NFT"],
+  [/^\/cart/, "Carrinho"],
+  [/^\/checkout/, "Pagamento"],
+  [/^\/order\//, "Pedido"],
+  [/^\/orders/, "Meus pedidos"],
+  [/^\/favorites/, "Favoritos"],
+  [/^\/login/, "Entrar"],
+  [/^\/register/, "Criar conta"],
+  [/^\/forgot-password/, "Recuperar senha"],
+  [/^\/profile/, "Perfil"],
+  [/^\/wallets/, "Carteiras"],
+];
+
+// Título do documento por rota (leitores de tela anunciam a mudança)
+function useDocumentTitle() {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    const match = TITLES.find(([re]) => re.test(pathname));
+    document.title = match
+      ? `${match[1]} · KURIO`
+      : "KURIO — Marketplace de NFTs";
+  }, [pathname]);
+}
+
+function Logo() {
   return (
-    <div
-      role="status"
-      aria-live="polite"
-      className="pointer-events-none fixed bottom-4 right-4 z-[60] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2"
+    <Link
+      to="/"
+      search={{}}
+      className="flex items-center gap-2 text-xl font-bold tracking-tight"
+      aria-label="KURIO, ir para o início"
     >
-      {toasts.map((t) => (
-        <div
-          key={t.id}
-          data-testid="toast"
-          className={cn(
-            "pointer-events-auto flex items-start justify-between gap-3 rounded-lg border bg-card p-3 text-sm shadow-lg",
-            t.tone === "error"
-              ? "border-danger text-danger"
-              : t.tone === "success"
-                ? "border-success text-success"
-                : "border-line text-fg",
-          )}
-        >
-          <span>{t.message}</span>
-          <button
-            aria-label="Dispensar aviso"
-            className="cursor-pointer"
-            onClick={() => dismiss(t.id)}
-          >
-            ✕
-          </button>
-        </div>
-      ))}
-    </div>
+      <span
+        aria-hidden="true"
+        className="flex size-8 items-center justify-center rounded-lg bg-primary text-sm text-primary-foreground"
+      >
+        K
+      </span>
+      <span>KURIO</span>
+    </Link>
   );
+}
+
+function initials(name: string) {
+  return name
+    .split(" ")
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
 }
 
 function Header() {
@@ -64,6 +106,7 @@ function Header() {
   const queryClient = useQueryClient();
   const { data: user } = useSession();
   const cart = useCart();
+  const [menuOpen, setMenuOpen] = useState(false);
   const search = useRouterState({
     select: (s) => (s.location.search as { q?: string }).q ?? "",
   });
@@ -90,21 +133,19 @@ function Header() {
   };
 
   const handleLogout = async () => {
+    setMenuOpen(false);
     await logout().catch(() => undefined);
     clearPrivateData(queryClient);
     navigate({ to: "/" });
   };
 
+  const linkClass =
+    "rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground";
+
   return (
-    <header className="sticky top-0 z-40 border-b border-line-soft bg-ink/95 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-        <Link
-          to="/"
-          search={{}}
-          className="text-xl font-bold tracking-[0.3em] text-primary"
-        >
-          KURIO
-        </Link>
+    <header className="sticky top-0 z-40 border-b bg-background/95 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 px-4 py-3">
+        <Logo />
 
         <form
           role="search"
@@ -118,75 +159,153 @@ function Header() {
           <label htmlFor="global-search" className="sr-only">
             Buscar NFTs
           </label>
-          <input
-            id="global-search"
-            type="search"
-            value={term}
-            onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Buscar NFTs, coleções ou criadores"
-            className="h-10 w-full rounded-lg border border-line bg-card px-3 text-sm placeholder:text-secondary"
-          />
+          <div className="relative">
+            <SearchIcon
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            />
+            <Input
+              id="global-search"
+              type="search"
+              value={term}
+              onChange={(e) => onSearchChange(e.target.value)}
+              placeholder="Buscar NFTs, coleções ou criadores"
+              className="h-10 rounded-lg pl-9"
+            />
+          </div>
         </form>
 
         <nav
           aria-label="Principal"
-          className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-sm"
+          className="ml-auto flex items-center gap-1 sm:gap-2"
         >
           {user && (
-            <Link to="/favorites" className="text-muted hover:text-fg">
-              Favoritos
-            </Link>
+            <div className="hidden items-center gap-1 md:flex">
+              <Link to="/favorites" className={linkClass}>
+                Favoritos
+              </Link>
+              <Link to="/orders" className={linkClass}>
+                Pedidos
+              </Link>
+              <Link to="/wallets" className={linkClass}>
+                Carteiras
+              </Link>
+            </div>
           )}
+
           <Link
             to="/cart"
             aria-label={`Carrinho, ${cart.count} ${cart.count === 1 ? "item" : "itens"}`}
-            className="flex items-center gap-1 text-fg hover:text-accent"
+            className="relative flex size-10 items-center justify-center rounded-lg hover:bg-muted"
           >
-            <span aria-hidden="true">Carrinho</span>
+            <ShoppingCartIcon aria-hidden="true" className="size-5" />
             <span
               data-testid="cart-count"
               aria-hidden="true"
-              className="rounded-full bg-primary px-2 text-xs font-bold text-ink"
+              className="absolute -top-0.5 -right-0.5 flex min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[11px] font-bold text-primary-foreground"
             >
               {cart.count}
             </span>
           </Link>
+
           {user ? (
             <>
-              <Link to="/orders" className="text-muted hover:text-fg">
-                Pedidos
-              </Link>
-              <Link to="/wallets" className="text-muted hover:text-fg">
-                Carteiras
-              </Link>
               <Link
                 to="/profile"
-                className="font-bold text-accent"
-                data-testid="user-name"
+                className="flex max-w-[9rem] items-center gap-2 rounded-lg px-1.5 py-1 text-sm font-medium hover:bg-muted"
               >
-                {user.name}
+                <Avatar className="size-7">
+                  {user.avatar && <AvatarImage src={user.avatar} alt="" />}
+                  <AvatarFallback className="text-xs">
+                    {initials(user.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span data-testid="user-name" className="truncate">
+                  {user.name}
+                </span>
               </Link>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
+                className="hidden md:inline-flex"
                 onClick={handleLogout}
-                className="cursor-pointer text-danger underline"
               >
                 Sair
-              </button>
+              </Button>
             </>
           ) : (
             <>
-              <Link
-                to="/login"
-                search={{}}
-                className="rounded-lg border border-primary bg-primary px-3 py-1.5 font-bold text-ink hover:bg-accent"
+              <Button asChild variant="outline" size="sm">
+                <Link to="/login" search={{}}>
+                  Entrar
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="dark"
+                size="sm"
+                className="hidden md:inline-flex"
               >
-                Entrar
-              </Link>
-              <Link to="/register" className="text-muted hover:text-fg">
-                Cadastrar
-              </Link>
+                <Link to="/register">Cadastrar</Link>
+              </Button>
             </>
           )}
+
+          {/* Menu móvel (Sheet) */}
+          <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
+            <SheetTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                aria-label="Abrir menu"
+              >
+                <MenuIcon aria-hidden="true" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription className="sr-only">
+                  Navegação principal
+                </SheetDescription>
+              </SheetHeader>
+              <ul className="flex flex-col gap-1 px-4 pb-4">
+                {[
+                  { to: "/", label: "Catálogo", icon: SearchIcon },
+                  ...(user
+                    ? [
+                        { to: "/favorites", label: "Favoritos", icon: HeartIcon },
+                        { to: "/orders", label: "Pedidos", icon: PackageIcon },
+                        { to: "/wallets", label: "Carteiras", icon: WalletIcon },
+                        { to: "/profile", label: "Perfil", icon: UserIcon },
+                      ]
+                    : [{ to: "/register", label: "Cadastrar", icon: UserIcon }]),
+                ].map((item) => (
+                  <li key={item.to}>
+                    <Link
+                      to={item.to}
+                      onClick={() => setMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-lg px-3 py-3 text-base font-medium hover:bg-muted"
+                    >
+                      <item.icon aria-hidden="true" className="size-5" />
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+                {user && (
+                  <li>
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-3 text-left text-base font-medium text-destructive hover:bg-muted"
+                    >
+                      Sair
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </SheetContent>
+          </Sheet>
         </nav>
       </div>
     </header>
@@ -198,10 +317,18 @@ function Footer() {
   const events = useRealtime((s) => s.events);
   const discarded = useRealtime((s) => s.discarded);
   return (
-    <footer className="mt-16 border-t border-line-soft py-8 text-xs text-secondary">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4">
+    <footer className="mt-16 border-t bg-secondary py-8 text-sm text-muted-foreground">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4">
         <span>© 2026 KURIO · Marketplace de NFTs (ambiente simulado)</span>
-        <span data-testid="realtime-status" aria-live="polite">
+        <span
+          data-testid="realtime-status"
+          aria-live="polite"
+          className="flex items-center gap-2"
+        >
+          <span
+            aria-hidden="true"
+            className={`size-2 rounded-full ${connected ? "bg-success" : "bg-muted-foreground"}`}
+          />
           Tempo real: {connected ? "conectado" : "desconectado"}
         </span>
         <span data-testid="realtime-stats" className="sr-only">
@@ -210,29 +337,6 @@ function Footer() {
       </div>
     </footer>
   );
-}
-
-const TITLES: [RegExp, string][] = [
-  [/^\/nfts\//, "Detalhes do NFT"],
-  [/^\/cart/, "Carrinho"],
-  [/^\/checkout/, "Pagamento"],
-  [/^\/order\//, "Pedido"],
-  [/^\/orders/, "Meus pedidos"],
-  [/^\/favorites/, "Favoritos"],
-  [/^\/login/, "Entrar"],
-  [/^\/register/, "Criar conta"],
-  [/^\/forgot-password/, "Recuperar senha"],
-  [/^\/profile/, "Perfil"],
-  [/^\/wallets/, "Carteiras"],
-];
-
-// Título do documento por rota (leitores de tela anunciam a mudança)
-function useDocumentTitle() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  useEffect(() => {
-    const match = TITLES.find(([re]) => re.test(pathname));
-    document.title = match ? `${match[1]} · KURIO` : "KURIO — Marketplace de NFTs";
-  }, [pathname]);
 }
 
 export default function Layout() {
@@ -267,12 +371,15 @@ export default function Layout() {
     <div className="flex min-h-screen flex-col">
       <a
         href="#conteudo"
-        className="sr-only focus:not-sr-only focus:absolute focus:left-2 focus:top-2 focus:z-50 focus:rounded focus:bg-primary focus:px-3 focus:py-2 focus:text-ink"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:rounded-lg focus:bg-primary focus:px-3 focus:py-2 focus:text-primary-foreground"
       >
         Ir para o conteúdo
       </a>
       <Header />
-      <main id="conteudo" className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
+      <main
+        id="conteudo"
+        className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 md:py-10"
+      >
         <Outlet />
       </main>
       <Footer />

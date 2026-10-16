@@ -10,7 +10,7 @@ import { z } from "zod";
 import Layout from "./components/Layout";
 import { sessionQuery } from "./hooks/useSession";
 import Home from "./pages/Home";
-import { EmptyState } from "./components/ui/misc";
+import { EmptyState } from "./components/states";
 
 // Páginas fora do catálogo carregam sob demanda (menos JS na primeira tela)
 const lazyPage = (

@@ -4,9 +4,10 @@ import { Link, getRouteApi, useRouter } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import type { FieldValues, Path, UseFormSetError } from "react-hook-form";
 import { z } from "zod";
-import { Button } from "../components/ui/button";
-import { Field, Input } from "../components/ui/field";
-import { Card } from "../components/ui/misc";
+import { Button } from "@/components/ui/button";
+import { Field } from "../components/Field";
+import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { onAuthenticated } from "../hooks/useSession";
 import { parseError } from "../services/api";
 import type { ParsedError } from "../services/api";
@@ -77,7 +78,7 @@ export function LoginPage() {
       <Card className="p-6">
         <h1 className="text-2xl font-bold">Entrar</h1>
         {redirect && redirect !== "/" && (
-          <p className="mt-1 text-sm text-muted">
+          <p className="mt-1 text-sm text-muted-foreground">
             Entre para continuar de onde parou.
           </p>
         )}
@@ -111,7 +112,7 @@ export function LoginPage() {
             <p
               role="alert"
               data-testid="login-error"
-              className="rounded-lg border border-danger bg-danger/10 p-3 text-sm text-danger"
+              className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
             >
               {err.message}
               {retry ? ` Tente novamente em ${retry}s.` : ""}
@@ -133,14 +134,14 @@ export function LoginPage() {
         </Button>
 
         <div className="mt-5 flex flex-wrap justify-between gap-2 text-sm">
-          <Link to="/forgot-password" className="text-accent underline">
+          <Link to="/forgot-password" className="text-primary underline">
             Esqueci a senha
           </Link>
-          <Link to="/register" className="text-accent underline">
+          <Link to="/register" className="text-primary underline">
             Criar conta
           </Link>
         </div>
-        <p className="mt-4 text-xs text-secondary">
+        <p className="mt-4 text-xs text-muted-foreground">
           Conta de teste: larissa@exemplo.com / Senha@123
         </p>
       </Card>
@@ -242,7 +243,7 @@ export function RegisterPage() {
               <span>Li e aceito os termos de uso e a política de privacidade.</span>
             </label>
             {errors.terms && (
-              <p role="alert" className="mt-1 text-xs text-danger">
+              <p role="alert" className="mt-1 text-xs text-destructive">
                 {errors.terms.message}
               </p>
             )}
@@ -253,7 +254,7 @@ export function RegisterPage() {
         </form>
         <p className="mt-4 text-sm">
           Já tem conta?{" "}
-          <Link to="/login" search={{}} className="text-accent underline">
+          <Link to="/login" search={{}} className="text-primary underline">
             Entrar
           </Link>
         </p>
@@ -304,7 +305,7 @@ export function ForgotPasswordPage() {
           </p>
         )}
         <p className="mt-4 text-sm">
-          <Link to="/login" search={{}} className="text-accent underline">
+          <Link to="/login" search={{}} className="text-primary underline">
             Voltar ao login
           </Link>
         </p>

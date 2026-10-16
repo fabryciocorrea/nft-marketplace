@@ -1,17 +1,14 @@
 import Decimal from "decimal.js";
-import type { CartItem } from "../types";
 
-export function lineTotal(item: CartItem) {
-  return new Decimal(item.nft.priceEth).times(item.quantity);
-}
-
-export function cartSubtotal(items: CartItem[]) {
-  return items.reduce(
-    (total, item) => total.plus(lineTotal(item)),
-    new Decimal(0),
-  );
-}
-
+// Valores em ETH são strings decimais; nunca usamos Number para somar.
 export function formatEth(value: Decimal.Value) {
   return new Decimal(value).toDecimalPlaces(6).toFixed();
+}
+
+export function lineTotal(priceEth: string, quantity: number) {
+  return new Decimal(priceEth).times(quantity);
+}
+
+export function sum(values: Decimal.Value[]) {
+  return values.reduce<Decimal>((t, v) => t.plus(v), new Decimal(0));
 }

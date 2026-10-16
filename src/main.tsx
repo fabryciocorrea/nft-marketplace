@@ -1,23 +1,35 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import App from "./App.tsx";
+import { RouterProvider } from "@tanstack/react-router";
+import { createAppRouter } from "./router";
 import "./index.css";
 
-// Criamos o cliente do React Query
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      retry: 1,
+      retryDelay: 400,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+const router = createAppRouter(queryClient);
 
 async function enableMocking() {
   if (import.meta.env.VITE_ENABLE_MOCKS !== "true") return;
-  const { worker } = await import("./mocks/browser");
-  return worker.start();
+  const { startMocks } = await import("./mocks");
+  return startMocks();
 }
 
 enableMocking().then(() => {
   createRoot(document.getElementById("root")!).render(
     <StrictMode>
       <QueryClientProvider client={queryClient}>
-        <App />
+        <RouterProvider router={router} />
       </QueryClientProvider>
     </StrictMode>,
   );

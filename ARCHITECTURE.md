@@ -1,177 +1,249 @@
-# ARCHITECTURE.md — NFT Marketplace
+# ARCHITECTURE.md — KURIO · Marketplace de NFTs
 
-Documento de arquitetura do projeto. Ele separa com clareza **o que está implementado hoje**, **o que está planejado** e **as limitações conhecidas**, para que quem avalia saiba exatamente o estado da entrega.
+Documento de arquitetura. Separa **o que está implementado e verificado**, **o que é parcial** e **as limitações conhecidas**.
+O plano detalhado e a rastreabilidade de requisitos estão em [ROADMAP.md](./ROADMAP.md).
 
-## 1. Estado atual da entrega
+> **Backend:** neste projeto o "backend" é uma **API REST + Socket.IO simulada com MSW**, executada no navegador (`src/mocks/`). O contrato é o mesmo que um servidor real teria; a persistência é o `localStorage`.
 
-| Área                                                                         | Status                             |
-| ---------------------------------------------------------------------------- | ---------------------------------- |
-| Catálogo de NFTs consumindo API simulada (MSW + Axios + TanStack Query)      | Implementado                       |
-| Busca por texto e filtro por categoria                                       | Implementado (no cliente)          |
-| Carrinho (adicionar, remover, esvaziar, total)                               | Implementado (Zustand, em memória) |
-| Login, sessão e logout via API simulada, com sessão recuperada após refresh  | Implementado                       |
-| Estados de carregamento, erro e vazio no catálogo                            | Implementado (versão básica)       |
-| Deploy na Vercel com mocks ativos                                            | Implementado                       |
-| Roteamento (TanStack Router), detalhe, checkout, perfil, carteiras           | Planejado                          |
-| Cadastro, rotas privadas, expiração de sessão durante a navegação, favoritos | Planejado                          |
-| Cotação, pedidos idempotentes, recibo                                        | Planejado                          |
-| Tempo real (Socket.IO via MSW)                                               | Planejado                          |
-| shadcn/ui, skeletons com shimmer, acessibilidade completa                    | Planejado                          |
-| Testes Playwright, auditoria Lighthouse                                      | Planejado                          |
+## 1. Estado da entrega
+
+| Área | Status |
+| --- | --- |
+| Rotas reais (TanStack Router), busca/filtros/ordenação/página **na URL** | Implementado |
+| Catálogo no servidor: busca, facetas com contagem, faixa de preço, ordenação, paginação | Implementado |
+| Detalhe do NFT (avaliações, relacionados, esgotado, 404) | Implementado |
+| Carrinho: visitante (local) e logado (servidor), mescla no login | Implementado |
+| Cotação (`/quotes`): rede, cupom, expiração, avisos de estoque | Implementado |
+| Pedido idempotente, estoque debitado, falha com devolução, histórico, recibo | Implementado |
+| Pagamento com carteira (principal/secundária) | Implementado |
+| Login, cadastro, esqueci a senha, login social (simulado), sessão, refresh, logout revogando o token | Implementado |
+| Rotas privadas com retorno ao contexto; expiração durante a navegação e o checkout | Implementado |
+| Perfil (dados, avatar, senha) e Carteiras (CRUD, principal única) | Implementado |
+| Favoritos idempotentes com atualização otimista e rollback | Implementado |
+| Tempo real: `nft.updated` / `order.updated` por Socket.IO simulado, com descarte e reconciliação | Implementado |
+| Tema KURIO (tokens do Figma, Roboto Mono), skeleton com shimmer, estados vazio/erro | Implementado |
+| Acessibilidade: foco, teclado, `aria-live`, diálogos com foco preso e `Esc`, contraste dos tokens | Implementado (testado) |
+| Responsivo em 390 / 768 / 1440 sem rolagem horizontal | Implementado (testado) |
+| Testes E2E Playwright (desktop e mobile) cobrindo API e interface | Implementado — 107 testes × 2 projetos |
+| Auditoria Lighthouse automatizada (`npm run lighthouse`) | Implementado |
+| Deploy na Vercel com mocks ativos | Configurado (veja seção 12) |
+| Fidelidade pixel a pixel ao Figma | **Parcial** (tokens e tipografia; layout é interpretação) |
+| `shadcn/ui` | **Parcial**: componentes no padrão shadcn escritos à mão (sem a CLI) |
+| `cart.updated` (Socket.IO, opcional) e blog/CMS reais | Não implementado |
 
 ## 2. Stack
 
-| Responsabilidade    | Tecnologia                                     | Uso atual                                 |
-| ------------------- | ---------------------------------------------- | ----------------------------------------- |
-| Interface           | React + TypeScript (Vite)                      | Em uso                                    |
-| Estilização         | Tailwind CSS v4 (`@tailwindcss/vite`)          | Em uso                                    |
-| Cliente HTTP        | Axios (`src/services/api.ts`, `baseURL: /api`) | Em uso (com interceptor de token)         |
-| Estado remoto       | TanStack Query                                 | Em uso (NFTs, sessão e mutation de login) |
-| Estado global de UI | Zustand                                        | Em uso (carrinho)                         |
-| Mocking             | MSW                                            | Em uso (dev e build publicado)            |
-| Roteamento          | TanStack Router                                | Instalado, ainda não utilizado            |
-| Tempo real          | socket.io-client                               | Instalado, ainda não utilizado            |
-| Formulários         | React Hook Form + Zod                          | Instalados, ainda não utilizados          |
-| Componentes         | shadcn/ui                                      | Não adotado ainda                         |
-| Testes E2E          | Playwright                                     | Não configurado ainda                     |
+| Responsabilidade | Tecnologia | Uso |
+| --- | --- | --- |
+| Interface | React 19 + TypeScript + Vite | Em uso |
+| Estilo | Tailwind CSS v4 (`@theme` com os tokens KURIO) | Em uso |
+| Componentes | Radix (Dialog, Slot) + `cva` + `tailwind-merge`, no padrão shadcn | Em uso (`src/components/ui`) |
+| Roteamento | TanStack Router (código, rotas lazy, `validateSearch` com Zod) | Em uso |
+| Estado remoto | TanStack Query | Em uso |
+| Estado de UI | Zustand (`persist` no carrinho anônimo; toasts) | Em uso |
+| Formulários | React Hook Form + Zod (`@hookform/resolvers`) | Em uso (login, cadastro, perfil, carteiras, newsletter) |
+| HTTP | Axios (interceptors de token e de renovação) | Em uso |
+| Tempo real | socket.io-client (carregado sob demanda) | Em uso |
+| Precisão decimal | decimal.js | Em uso (cliente e API simulada) |
+| API simulada | MSW 3 (`http`, `ws`) + `@mswjs/socket.io-binding` | Em uso |
+| Testes | Playwright | Em uso |
+| Qualidade | oxlint, Lighthouse | Em uso |
 
-## 3. Estrutura do projeto
+## 3. Estrutura
 
 ```text
 src/
-├── components/
-│   ├── CartModal.tsx        # modal do carrinho
-│   └── LoginModal.tsx       # modal de login (useMutation + API)
-├── hooks/
-│   └── useSession.ts        # useQuery da sessão (recuperada após refresh)
-├── mocks/
-│   ├── browser.ts           # setupWorker + handlers (NFTs e autenticação)
-│   └── fixtures/db.ts       # NFTs, usuário de exemplo e contas de teste
-├── pages/
-│   └── Home.tsx             # catálogo, busca, filtros, cabeçalho
-├── services/
-│   ├── api.ts               # instância Axios + interceptor do token
-│   ├── auth.ts              # login, fetchSession, logout, token
-│   └── useCartStore.ts      # store Zustand do carrinho
-├── types/index.ts           # NFT, User, Wallet, CartItem, Order
-├── App.tsx
-└── main.tsx                 # QueryClientProvider + ativação do MSW
+├── components/        Layout, Header/Footer, NftCard, FavoriteButton, FilterPanel
+│   └── ui/            button, field (Input/Select/Field), dialog, misc (Skeleton, Badge, Card, Empty/ErrorState)
+├── hooks/             useSession (sessão, merge do carrinho, limpeza), useCart (visitante x servidor)
+├── pages/             Home, NftDetail, Cart, Checkout, Order, Orders, Favorites, Auth, Profile, Wallets
+├── services/          api.ts (Axios + refresh), endpoints.ts (contratos), socket.ts, toast.ts, attempt.ts, useCartStore.ts
+├── mocks/             API simulada (seção 5)
+├── types/index.ts     Contratos tipados
+├── utils/money.ts     Decimal
+├── router.tsx         Rotas, guardas e serialização limpa da URL
+└── main.tsx           QueryClient, RouterProvider, ativação do MSW
+tests/e2e/             api-*.spec.ts (contrato) e ui-*.spec.ts (interface)
+scripts/lighthouse.mjs Auditoria do build de produção
 ```
 
-## 4. Contratos REST
+## 4. Rotas da aplicação
 
-### Implementados (handlers MSW em `src/mocks/browser.ts`)
+| Rota | Acesso | Observações |
+| --- | --- | --- |
+| `/` | público | `?q&collection&network&minPrice&maxPrice&tab&sort&page` |
+| `/nfts/$id` | público | detalhe, avaliações, relacionados |
+| `/cart` | público | visitante usa o carrinho local |
+| `/login?redirect=` | público | `redirect` só aceita caminhos internos |
+| `/register`, `/forgot-password` | público | |
+| `/checkout`, `/order/$id`, `/orders`, `/favorites`, `/profile`, `/wallets` | **privado** | sem sessão → `/login?redirect=<url original>` |
 
-| Método | Rota                | Descrição                                              | Erros                                             |
-| ------ | ------------------- | ------------------------------------------------------ | ------------------------------------------------- |
-| GET    | `/api/nfts`         | Lista completa de NFTs (sem paginação)                 | -                                                 |
-| POST   | `/api/auth/login`   | Corpo `{ email, password }`; devolve `{ token, user }` | 401 `INVALID_CREDENTIALS`, 422 `VALIDATION_ERROR` |
-| GET    | `/api/auth/session` | Usuário da sessão, via `Authorization: Bearer <token>` | 401 `SESSION_INVALID`                             |
-| POST   | `/api/auth/logout`  | Encerra a sessão (resposta 204)                        | -                                                 |
+## 5. API simulada (backend)
 
-Formato de erro padrão: `{ "error": { "code": "...", "message": "..." } }`.
+```text
+src/mocks/
+├── index.ts          setupWorker, startMocks(), window.__kurioMocks (ferramentas de teste)
+├── db.ts             "banco" em localStorage (schemaVersion), estoque, preços, pedidos, resolução
+├── http.ts           route(): latência/falhas, sessão, JSON, validações
+├── errors.ts         catálogo único de códigos de erro
+├── scenarios.ts      cenários configuráveis
+├── bus.ts            eventos de domínio → socket
+├── socket.ts         servidor Socket.IO simulado
+├── fixtures/seed.ts  27 NFTs, 6 coleções, 3 redes, usuários, carteiras, cupons
+└── handlers/         auth, catalog, favorites, cart, commerce, account, content, admin
+```
 
-### Planejados (ainda **não** implementados)
+### 5.1 Contratos REST
 
-| Recurso   | Operações previstas                                                                |
-| --------- | ---------------------------------------------------------------------------------- |
-| Conta     | `POST /auth/register`                                                              |
-| NFTs      | Busca/filtros/ordenação/paginação no servidor e `GET /nfts/:id`                    |
-| Favoritos | `GET`, `PUT`, `DELETE /favorites/:nftId`                                           |
-| Carrinho  | `GET /cart`, `POST /cart/items`, `PATCH /cart/items/:id`, `DELETE /cart/items/:id` |
-| Cotação   | `POST /quotes` (cupom, disponibilidade, descontos, taxas, total)                   |
-| Pedidos   | `POST /orders` (com `Idempotency-Key`), `GET /orders/:id`                          |
-| Perfil    | `GET`/`PATCH /profile`, avatar, alteração de senha                                 |
-| Carteiras | `GET`, `POST`, `PATCH /wallets`                                                    |
+Convenções: base `/api`; `Authorization: Bearer <token>`; erro `{ "error": { "code", "message", "details?" } }`; validação com `details.fields`; valores monetários em **string decimal**.
 
-## 5. Sessão e autenticação
+| Método | Rota | Auth | Resumo |
+| --- | --- | --- | --- |
+| POST | `/auth/register` | — | 201 `{token,user}`; 409 `EMAIL_TAKEN`; 422 com campos |
+| POST | `/auth/login` | — | 200; 401 `INVALID_CREDENTIALS`; 422; **429** após 5 falhas/5 min (`Retry-After`) |
+| GET | `/auth/session` | ✔ | `{user, expiresAt}` |
+| POST | `/auth/refresh` | ✔ | renova a janela de 30 min |
+| POST | `/auth/logout` | — | 204 e **revoga** o token no servidor |
+| POST | `/auth/forgot-password` | — | 202 (não revela se o e-mail existe) |
+| POST | `/auth/social/:provider` | — | login social simulado (`google`, `github`) |
+| GET | `/nfts` | opc. | `q, collection, network, minPrice, maxPrice, tab, sort, page, pageSize` → `{items,page,pageSize,total,totalPages}` |
+| GET | `/nfts/:id`, `/nfts/:id/related`, `/nfts/:id/reviews` | opc. | 404 `NOT_FOUND` |
+| GET | `/facets`, `/collections` | — | contagens por faceta |
+| GET/PUT/DELETE | `/favorites[/:nftId]` | ✔ | PUT/DELETE idempotentes (204) |
+| GET/DELETE | `/cart` | ✔ | `{items, version, subtotal}` |
+| POST/PATCH/DELETE | `/cart/items[/:id]` | ✔ | 409 `AVAILABILITY_CONFLICT` com `details.available` |
+| POST | `/cart/merge` | ✔ | mescla carrinho anônimo respeitando o estoque (`adjusted[]`) |
+| POST | `/quotes` | ✔ | `{id,lines,subtotal,discount,networkFee,total,expiresAt(60 s),warnings[]}`; 422 `COUPON_INVALID` |
+| POST | `/orders` | ✔ | `Idempotency-Key` obrigatório; 201 novo / 200 repetido; 409 `IDEMPOTENCY_KEY_REUSED`, `AVAILABILITY_CONFLICT`, `QUOTE_EXPIRED`, `QUOTE_MISMATCH` |
+| GET | `/orders`, `/orders/:id`, `/orders/:id/receipt` | ✔ | 403 para pedido alheio; recibo com `explorerUrl` |
+| GET/PATCH | `/profile` | ✔ | nome e preferências |
+| PUT | `/profile/avatar`, POST `/profile/password` | ✔ | 403 `WRONG_PASSWORD`; troca encerra as outras sessões |
+| GET/POST/PATCH/DELETE | `/wallets[/:id]` | ✔ | 409 `WALLET_DUPLICATED`, `LAST_WALLET`; 422 `WALLET_PRIMARY_REQUIRED` |
+| GET | `/posts` | — | novidades |
+| POST | `/newsletter` | — | idempotente (201 / 200) |
+| POST/GET/PUT | `/__reset`, `/__scenario` | — | **somente mock** |
 
-**Como funciona hoje**
+### 5.2 Regras de negócio
 
-1. O `LoginModal` usa `useMutation` para chamar `POST /api/auth/login`. Credenciais inválidas retornam 401, e a mensagem da API é exibida no modal (`role="alert"`).
-2. Em caso de sucesso, o token é salvo em `localStorage` (chave `nft-marketplace:token`) e o usuário é gravado no cache do TanStack Query (`['session']`).
-3. Um interceptor do Axios anexa `Authorization: Bearer <token>` a toda requisição.
-4. Ao abrir ou recarregar a página, o hook `useSession` consulta `GET /api/auth/session`. Se o token for válido, a sessão é restaurada; se for inválido ou expirado, o token é removido e o usuário volta ao estado deslogado.
-5. No logout, a API é chamada, o token é removido, a sessão é limpa do cache e o carrinho é esvaziado para que o próximo usuário não veja os itens do anterior.
+- **Servidor é a fonte da verdade** para preço, estoque, desconto, taxa e total (`computeTotals`, uma função usada por cotação e pedido).
+- **Taxa de rede** = `(0,0021 + 0,0004 × (unidades − 1)) × multiplicador da rede` (Ethereum 1, Polygon 0,2, Arbitrum 0,4). Exemplo verificado: 1 unidade de 0,85 ETH na Ethereum → `0,85 + 0,0021 = 0,8521`.
+- **Cupons:** `PROMO10` (10%), `FRETE0` (taxa zero), `UNICO` (uso único), `VENCIDO` (expirado).
+- **Estoque:** debitado ao criar o pedido; **devolvido** se o pagamento falhar; nunca negativo.
+- **Pedido:** `pending → confirmed | failed` em 2,5 s. Falha ocorre com a carteira `0x…dEaD` ou com o cenário `reject-orders`. Ao confirmar, os itens saem do carrinho do servidor.
+- **Idempotência:** chave escopada por usuário, validade de 24 h, comparada com a "impressão digital" (itens + carteira + cupom). As reservas e o registro da chave são síncronos: três requisições simultâneas criam **um** pedido.
+- **Sessão:** servidor guarda sessões (30 min); logout e troca de senha revogam; `refresh` renova.
+- **Segurança simulada:** senha com **sal por usuário + SHA-256**; token opaco (`tok_…`). Em produção: Argon2/bcrypt e cookie `HttpOnly`.
+- **Isolamento:** carrinho, favoritos, carteiras e pedidos nunca aparecem para outro usuário (403/404).
 
-**Sobre o mock:** o token tem o formato `mock.<userId>.<expiraEm>` (validade de 30 minutos) e não é assinado. As senhas das contas de teste ficam guardadas como hash SHA-256 (sem salt) e são comparadas na API simulada, nunca em claro.
+### 5.3 Cenários de mock
 
-**Contas fictícias:** `larissa@exemplo.com` / `Senha@123` e `chavesdo8@exemplo.com` / `Senha@456`.
+Ativáveis por URL (`/?scenario=slow,flaky`) ou em teste (`__kurioMocks.setScenario({...})`).
 
-**Ainda não implementado:** cadastro, rotas privadas com redirecionamento ao login, tratamento de expiração durante a navegação e o checkout (preservando contexto), e limpeza de subscriptions (não há Socket.IO ainda).
+| Cenário | Efeito |
+| --- | --- |
+| `slow` (`latencyMs`) | 1,5 s em toda requisição |
+| `flaky` (`failRate`) | 30% de falha (500) nas rotas de dados |
+| `server-error` | 500 em todas as rotas de dados |
+| `session-expired` | revoga a sessão na próxima requisição autenticada |
+| `session-blip` | 401 único; a sessão continua válida (testa renovação silenciosa) |
+| `reject-orders` | pedidos terminam em `failed` |
+| `favorites-fail` | PUT/DELETE de favoritos falham (testa rollback) |
 
-## 6. Estado do servidor e estratégia de cache
+`window.__kurioMocks` expõe `reset()`, `expireQuotes()`, `expireSessions()` e `socket.{count, dropAll, replayLast, emitStale}`.
 
-| Consulta      | Chave         | Política                                                         |
-| ------------- | ------------- | ---------------------------------------------------------------- |
-| Lista de NFTs | `['nfts']`    | Padrão do TanStack Query (sem `staleTime`/`gcTime` customizados) |
-| Sessão        | `['session']` | `staleTime` de 5 minutos, `retry: false`                         |
+## 6. Tempo real (Socket.IO simulado)
 
-- Busca por texto e filtro por categoria são aplicados **no cliente**, sobre a lista já carregada. A URL **não** reflete busca/filtros.
-- O login é uma mutation que atualiza o cache da sessão com `setQueryData`; o logout limpa a mesma chave.
-- Estados de `isLoading` e `error` do catálogo são tratados com mensagens simples.
-- Ainda não há atualização otimista nem invalidação de cache por eventos.
+- Servidor em `src/mocks/socket.ts` via `ws.link` do MSW + `@mswjs/socket.io-binding`. **O cliente nunca emite eventos de domínio**: eles nascem de mudanças no banco (`bus.ts`).
+- Envelope: `{ eventId, resource, id, version, occurredAt, payload }`. Eventos: `nft.updated` (todos) e `order.updated` (só o dono).
+- Cliente (`services/socket.ts`): descarta `eventId` repetido e `version` ≤ a conhecida; ao (re)conectar, invalida os dados e reconcilia via REST; reconecta quando o usuário muda; `removeAllListeners()` + `disconnect()` no logout/expiração.
+- Pedidos: o evento atualiza a tela; o polling (5 s com socket, 1 s sem) é só contingência.
+- **Armadilhas encontradas (documentadas para o próximo mantenedor):**
+  1. O MSW 3 remove o prefixo `/socket.io/` da URL antes de casar; por isso o link usa `ws.link("*")` e ignora conexões sem `EIO` (HMR do Vite segue ao servidor real).
+  2. `engine.io-client` guarda o `WebSocket` global ao ser carregado; `socket.io-client` é importado **sob demanda**, depois do MSW assumir o WebSocket.
+  3. O servidor envia `ping` ("2") a cada 20 s; sem isso o cliente reconecta a cada 30 s.
 
-**Planejado:** chaves de query com os parâmetros de busca, filtros na URL (search params do TanStack Router), política de cache completa documentada, cancelamento de respostas obsoletas via `AbortSignal` e pelo menos uma atualização otimista (favoritos) com rollback.
+## 7. Sessão e autenticação (cliente)
 
-## 7. Estado do carrinho
+1. Login/cadastro gravam o token (`nft-marketplace:token`) e o usuário no cache (`['session']`), e **mesclam** o carrinho anônimo (`POST /cart/merge`).
+2. Interceptor Axios: em `401 SESSION_INVALID`, tenta **uma** renovação compartilhada e repete a requisição; se falhar, limpa a sessão e emite `session-expired`.
+3. `Layout` trata a expiração: limpa dados privados, mostra aviso e, em rota privada, leva a `/login?redirect=<url>`. Após o login, o usuário volta ao checkout com o carrinho do servidor preservado.
+4. `useSession` renova uma vez antes de considerar a sessão perdida; falha de rede/servidor **não** apaga o token.
 
-- Gerenciado por uma store Zustand (`useCartStore`): `addItem`, `removeItem`, `clearCart`.
-- O estado vive **em memória**: some ao recarregar a página. É esvaziado no logout.
-- O carrinho **não** consulta nem sincroniza com a API, não respeita disponibilidade por edição e não é vinculado a um usuário.
-- O total é calculado no cliente com `Number(priceEth) * quantity` e exibido com `toFixed(2)`. Isso **não** atende ao requisito de precisão decimal para ETH.
-- O botão "Finalizar Compra" apenas exibe um `alert` e esvazia o carrinho. **Não existe fluxo de checkout, cotação nem pedido.**
+## 8. Cache (TanStack Query)
 
-**Planejado:** carrinho persistido, valores em string decimal com biblioteca de precisão, cotação como fonte do resumo e fluxo de checkout com pedido idempotente.
+| Chave | Política |
+| --- | --- |
+| `['nfts', params]` / `['facets', params]` | `placeholderData` mantém a lista anterior; `AbortSignal` cancela respostas obsoletas |
+| `['nft', id]` | atualizado por `nft.updated` |
+| `['session']` | `staleTime` 5 min, `retry: false` |
+| `['cart', userId]` | invalidado por eventos e após confirmação |
+| `['quote', userId, fingerprint]` | renovada ~5 s antes de expirar |
+| `['orders', userId, id]` | atualizado por `order.updated`; contingência por polling |
+| Padrão | `staleTime` 30 s, `retry: 1`, `gcTime` 5 min |
 
-## 8. Tempo real e reconciliação REST × Socket.IO
+Favoritos usam `onMutate` (otimista) + snapshot e `onError` (rollback). O logout remove os dados privados do cache.
 
-Não implementado. A dependência `socket.io-client` está instalada, mas nenhum evento (`nft.updated`, `order.updated`) é emitido ou consumido.
+## 9. Acessibilidade e responsividade
 
-**Planejado:** servidor Socket.IO simulado via `@mswjs/socket.io-binding`, eventos com id, recurso e versão, descarte de duplicatas e eventos antigos, reconciliação com REST após reconexão e liberação de listeners no logout.
+- Landmarks (`banner`, `navigation`, `main`, `contentinfo`), um `h1` por página, link "ir para o conteúdo", título do documento por rota.
+- Todos os campos têm rótulo; erros com `role="alert"` e `aria-invalid`; quantidade do carrinho com `aria-live`.
+- Diálogos Radix: foco preso, `Esc` fecha, foco volta ao gatilho.
+- Foco visível (2 px); `prefers-reduced-motion` desliga o shimmer.
+- Contraste (testado): textos ≥ 4,5:1; **bordas de campos/botões usam `#8A5A3C` (≥ 3:1)**; as bordas originais do Figma (`#3F2319`, `#55321F`) ficaram só como decoração.
+- Filtros recolhíveis no mobile; grade 1 / 2 / 3 colunas; sem rolagem horizontal em 390, 768 e 1440.
 
-## 9. Mocking com MSW
+## 10. Testes e qualidade
 
-- Handlers definidos em `src/mocks/browser.ts` e dados em `src/mocks/fixtures/db.ts` (3 NFTs e 2 contas de teste).
-- O worker é iniciado em `src/main.tsx` quando `VITE_ENABLE_MOCKS === "true"`, valor definido em `.env.development` e `.env.production`. Assim, o MSW roda também no build publicado.
-- Os handlers são executados no navegador. A sessão persiste porque o token fica em `localStorage`.
-- Ainda não existem cenários configuráveis (latência, falhas, sessão expirada etc.) nem reset de cenário.
+| Arquivo | Testes | Foco |
+| --- | --- | --- |
+| `api-auth` | 10 | cadastro, login, 429, sessão, refresh, logout, senha, 401 em rotas privadas |
+| `api-catalog` | 9 | paginação, busca, filtros, ordenação, 422, facetas, detalhe |
+| `api-commerce` | 15 | cotação, cupons, idempotência, concorrência, estoque, falha, isolamento, histórico |
+| `api-account` | 14 | carrinho, favoritos, perfil, carteiras, cenários |
+| `ui-catalog` | 11 | URL, facetas, preço, paginação, skeleton, erro, detalhe |
+| `ui-purchase` | 18 | carrinho, rotas privadas, checkout, recusa, conflito, expiração |
+| `ui-account` | 9 | cadastro, perfil, carteiras, favoritos, newsletter |
+| `ui-realtime` | 7 | evento, duplicata, versão antiga, queda e reconciliação |
+| `ui-a11y` | 13 | responsividade, contraste, teclado, estrutura |
+| `ui-smoke` | 1 | app sobe e conecta |
 
-## 10. Decisões de UX
+```bash
+npm run test:e2e            # desktop (1440) e mobile (390)
+E2E_PREVIEW=1 npm run test:e2e   # contra o build de produção
+npm run build && npm run lighthouse
+```
 
-- Modais com fundo desfocado (`backdrop-blur`).
-- Contador de itens no botão do carrinho.
-- Estado vazio amigável quando a busca não retorna resultados.
-- Alerta visual quando a requisição do catálogo falha.
-- Login com mensagem de erro clara, botão desabilitado e texto "Autenticando..." durante a requisição, e dica com conta de teste.
+**Última execução completa contra o build de produção (`E2E_PREVIEW=1`): 214 de 214 testes passaram** (107 × desktop e mobile). Na execução anterior no servidor de desenvolvimento houve uma falha de temporização em um teste de teclado, corrigida (o teste passou a esperar a renderização).
 
-## 11. Acessibilidade e responsividade
+**Lighthouse (mobile, throttling padrão, build de produção):**
 
-Parcialmente atendidas. O modal de login tem `role="dialog"`, `aria-modal`, rótulos associados aos campos (`htmlFor`/`id`) e mensagem de erro com `role="alert"`. O layout usa classes responsivas do Tailwind (grid de 1 coluna no mobile, 3 no desktop). Ainda faltam: focus trap e fechamento com `Esc` nos modais (inclusive o do carrinho), `aria-label` nos botões com emoji, feedback `aria-live` para o carrinho, skeletons com `prefers-reduced-motion` e validação nas larguras 390/768/1440.
+| Rota | Performance | Acessibilidade | Boas práticas | SEO |
+| --- | --- | --- | --- | --- |
+| `/` | 50–67 | 100 | 100 | 100 |
+| `/nfts/1` | 52–68 | 100 | 100 | 100 |
+| `/cart` | 63–74 | 100 | 100 | 100 |
+| `/login` | 64–78 | 100 | 100 | 100 |
 
-## 12. Desvios do Figma
+A performance varia entre execuções (throttling simulado). O principal custo é o MSW + pacote da API simulada (~440 kB) carregado antes da primeira renderização, o que não existiria com uma API real.
 
-Ainda não foi feita a aderência fiel ao layout do Figma (tipografia, cores, espaçamentos, composição). A interface atual é uma interpretação própria com Tailwind. Este item deve ser revisado tela a tela.
+## 11. Decisões de design e inconsistências do Figma
+
+- **Facetas:** no Figma as coleções somam 239 e as redes 284 para o mesmo catálogo. Aqui cada NFT pertence a **uma** coleção e **uma** rede; as contagens de cada faceta consideram os demais filtros e as somas coincidem (testado). Se um NFT puder existir em várias redes, o modelo precisa mudar.
+- **Bordas:** ver seção 9.
+- **Telas sem frame mobile no Figma** (Perfil, Carteiras, Confirmação): layout responsivo próprio.
+
+## 12. Deploy
+
+- `vercel.json` reescreve todas as rotas para `index.html` (SPA).
+- `.npmrc` com `legacy-peer-deps=true`: `@mswjs/socket.io-binding@0.2` declara `peer msw@^2` e o projeto usa MSW 3 (funciona; ver seção 6).
+- `VITE_ENABLE_MOCKS=true` em `.env.production`: o MSW roda também no build publicado.
 
 ## 13. Limitações conhecidas
 
-- Token de sessão guardado em `localStorage` e não assinado (aceitável apenas no ambiente simulado; em produção, o recomendado é cookie `HttpOnly`).
-- Hash SHA-256 sem salt nas contas de teste.
-- Expiração de sessão não é tratada durante a navegação nem no checkout; não há rotas privadas.
-- Carrinho não persiste após refresh e não é associado a um usuário.
-- Valores em ETH usam `Number`, sem precisão decimal.
-- Não há checkout, cotação, pedidos, favoritos, perfil, carteiras nem cadastro.
-- Não há rotas: a aplicação é uma única página.
-- Não há Socket.IO, testes E2E nem auditoria Lighthouse.
-- Imagens dos NFTs vêm de URLs externas (Unsplash), dependendo de rede em tempo de execução.
-
-## 14. Roadmap de implementação (ordem sugerida)
-
-1. Checkout com pedido idempotente e tela de confirmação.
-2. Carrinho persistente e valores em string decimal.
-3. TanStack Router, com busca e filtros na URL, página de detalhe do NFT e rotas privadas.
-4. Teste Playwright dos fluxos principais.
-5. Socket.IO simulado com `nft.updated` e `order.updated`.
-6. Cadastro, favoritos (com atualização otimista), perfil e carteiras.
-7. Tratamento de expiração de sessão com retomada de contexto.
-8. Auditoria Lighthouse, acessibilidade e fidelidade ao Figma.
+- Token em `localStorage` e senhas com SHA-256 salgado só valem para a simulação. Produção: cookie `HttpOnly` + CSRF e Argon2/bcrypt.
+- O "banco" está no `localStorage`: vale por navegador, ~5 MB; abas compartilham os dados mas **não os eventos** (o barramento é por aba).
+- O servidor simulado roda no cliente: não há concorrência real entre usuários.
+- Fidelidade ao Figma é parcial (tokens, tipografia e estrutura; espaçamentos e composição são interpretação).
+- Performance móvel no Lighthouse abaixo de 80 em algumas rotas (custo do MSW).
+- `shadcn/ui`: componentes escritos à mão no padrão (Radix + cva), sem `components.json` nem CLI.
+- `@mswjs/socket.io-binding` ainda não declara suporte ao MSW 3; pode quebrar em atualizações.
